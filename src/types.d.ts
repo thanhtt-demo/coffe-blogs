@@ -22,6 +22,8 @@ export interface Post {
   excerpt?: string;
   /**  */
   image?: ImageMetadata | string;
+  /** Source photo identifier used to keep cover images unique across posts. */
+  imageSourceId?: string;
 
   /**  */
   category?: Taxonomy;

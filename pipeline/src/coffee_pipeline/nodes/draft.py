@@ -42,6 +42,14 @@ specialty trên blog cá nhân.
 **Mở bài:** Bắt đầu bằng anecdote hoặc câu hỏi kích thích tò mò — KHÔNG bắt \
 đầu bằng "Cà phê là..."
 
+**Heading:** Không dùng các heading kiểu mẫu như `## Mở đầu:`, `## Kết luận:`, \
+`## Tổng quan:`. Heading phải tự nhiên, đi thẳng vào nội dung, đọc lên giống \
+người viết thật chứ không giống dàn bài học sinh.
+
+**Tiêu đề có số đếm:** Chỉ dùng tiêu đề dạng "5 điều", "4 giống", "7 lý do" \
+nếu trong bài thực sự có đúng từng ấy ý hoặc từng ấy nhóm được bảo vệ rõ bằng \
+nguồn. Nếu không chắc, hãy dùng tiêu đề không có số.
+
 **Định dạng phong phú — bắt buộc dùng đủ các yếu tố sau:**
 
 1. **Hình ảnh minh hậa xen kẽ** — chèn ảnh vào giữa bài theo cú pháp:
@@ -69,7 +77,8 @@ specialty trên blog cá nhân.
 
 7. **Heading structure:** `##` cho section chính, `###` cho sub-section.
 
-**Kết bài:** Open-ended, đặt câu hỏi cho độc giả, khuyến khích bình luận.
+**Kết bài:** Open-ended, đặt câu hỏi cho độc giả, khuyến khích bình luận. \
+Không đặt heading kết bài là "Kết luận" nếu có thể viết một heading tự nhiên hơn.
 
 ## Định dạng output
 
@@ -100,6 +109,10 @@ def draft_node(state: ResearchState) -> dict:
     cover_url = (
         cover_img["url"] if cover_img
         else CATEGORY_IMAGE_MAP.get(category, CATEGORY_IMAGE_MAP["nghien-cuu"])
+    )
+    cover_source_id = (
+        cover_img.get("source_id") if isinstance(cover_img, dict)
+        else _extract_source_id(cover_url)
     )
     today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT00:00:00Z")
 
@@ -175,6 +188,7 @@ publishDate: {today}
 title: '{outline_title or topic}'
 excerpt: '{outline_excerpt or ""}'
 image: '{cover_url}'
+imageSourceId: '{cover_source_id or ''}'
 category: {category}
 tags:
 {tags_yaml}
@@ -222,6 +236,16 @@ def _format_sources(docs: list[dict]) -> str:
             f"{doc['content']}"
         )
     return "\n\n---\n\n".join(parts)
+
+
+def _extract_source_id(url: str | None) -> str:
+    if not url:
+        return ""
+
+    import re
+
+    match = re.search(r"(photo-[a-z0-9\-]+)", url)
+    return match.group(1) if match else url
 
 
 def _format_references_yaml(docs: list[dict]) -> str:
@@ -276,6 +300,7 @@ def _mock_draft(state: ResearchState) -> str:
         f"title: '[DRY RUN] {topic}'\n"
         "excerpt: 'Bài viết dry-run để test pipeline'\n"
         f"image: '{image_url}'\n"
+        f"imageSourceId: '{_extract_source_id(image_url)}'\n"
         f"category: {category}\n"
         "tags:\n  - dry-run\nauthor: 'Ba Tê'\nreferences: []\n"
         "---\n\n"

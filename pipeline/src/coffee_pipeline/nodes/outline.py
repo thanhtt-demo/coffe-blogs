@@ -32,6 +32,8 @@ Rules:
     * Secret/hidden: "Bí Mật Đằng Sau Vị Chua Nhẹ Trong Cà Phê Đà Lạt"
     * Challenge assumption: "Bạn Uống Cà Phê Sai Cách Suốt Bao Nhiêu Năm Qua?"
   Title must be in Vietnamese, max 80 characters, no generic phrases like "Khám phá" or "Tìm hiểu".
+    If title contains a number, that number MUST exactly match the real count defended by the article and sources.
+    Do NOT count overlapping parent-child groups as separate items unless the taxonomy is explicitly justified.
 - cover_image_query: broad visual query for the article as a whole
 - image_query per section: MUST match the specific subject of THAT section.
   Examples: if section is about Robusta → "robusta coffee plant closeup vietnam";
@@ -39,6 +41,8 @@ Rules:
   if section is about flavor profiles → "specialty coffee cupping tasting notes".
   NOT generic like "coffee beans" — be precise.
 - Not every section needs an image. Set image_query to null for intro/conclusion.
+- Section headings must sound natural. Do NOT use headings like "## Mở đầu:", "## Kết luận:", "## Tổng quan:".
+- Use direct, content-specific headings instead, for example a question or a statement that can stand on its own.
 - tags: lowercase, hyphenated, 3–5 tags
 - All Vietnamese text must be natural, not translated-sounding
 """

@@ -38,10 +38,20 @@ if (!props.decoding) {
 }
 
 const _image = await findImage(props.src);
+const plainImageAttributes = Object.fromEntries(
+  Object.entries(props).filter(
+    ([key]) => !['src', 'widths', 'layout', 'aspectRatio', 'objectPosition', 'format'].includes(key)
+  )
+) as HTMLAttributes<'img'>;
 
 let image: ImageType | undefined = undefined;
 
-if (
+if (typeof _image === 'string' && _image.startsWith('/')) {
+  image = {
+    src: _image,
+    attributes: plainImageAttributes as HTMLAttributes<'img'>,
+  };
+} else if (
   typeof _image === 'string' &&
   (_image.startsWith('http://') || _image.startsWith('https://')) &&
   isUnpicCompatible(_image)

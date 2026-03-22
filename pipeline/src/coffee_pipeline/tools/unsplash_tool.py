@@ -1,4 +1,5 @@
 import os
+import re
 
 import httpx
 
@@ -112,6 +113,7 @@ def _try_query(query: str, count: int, access_key: str) -> list[dict]:
                     "url": url,
                     "alt": alt.capitalize() if alt else query,
                     "photographer": photographer,
+                    "source_id": _extract_source_id(url),
                     "query": query,
                 }
             )
@@ -125,3 +127,8 @@ def _try_query(query: str, count: int, access_key: str) -> list[dict]:
     except Exception as e:
         print(f"[Unsplash] Error for {query!r}: {e}")
         return []
+
+
+def _extract_source_id(url: str) -> str:
+    match = re.search(r"(photo-[a-z0-9\-]+)", url)
+    return match.group(1) if match else url

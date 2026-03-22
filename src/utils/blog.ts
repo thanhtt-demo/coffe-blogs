@@ -5,6 +5,19 @@ import type { Post } from '~/types';
 import { APP_BLOG } from 'astrowind:config';
 import { cleanSlug, trimSlash, BLOG_BASE, POST_PERMALINK_PATTERN, CATEGORY_BASE, TAG_BASE } from './permalinks';
 
+const REMOTE_MARKDOWN_IMAGE_RE = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/i;
+const REMOTE_COVER_RE = /^https?:\/\//i;
+
+const assertNoRemotePostImages = ({ id, image, body }: { id: string; image?: unknown; body?: string }) => {
+  if (typeof image === 'string' && REMOTE_COVER_RE.test(image)) {
+    throw new Error(`Post ${id} still uses a remote cover image. Run coffee-research localize-images first.`);
+  }
+
+  if (typeof body === 'string' && REMOTE_MARKDOWN_IMAGE_RE.test(body)) {
+    throw new Error(`Post ${id} still uses remote inline images. Run coffee-research localize-images first.`);
+  }
+};
+
 const generatePermalink = async ({
   id,
   slug,
@@ -42,6 +55,7 @@ const generatePermalink = async ({
 
 const getNormalizedPost = async (post: CollectionEntry<'post'>): Promise<Post> => {
   const { id, data } = post;
+  assertNoRemotePostImages({ id, image: data.image, body: post.body });
   const { Content, remarkPluginFrontmatter } = await render(post);
 
   const {
@@ -50,6 +64,7 @@ const getNormalizedPost = async (post: CollectionEntry<'post'>): Promise<Post> =
     title,
     excerpt,
     image,
+    imageSourceId,
     tags: rawTags = [],
     category: rawCategory,
     author,
@@ -85,6 +100,7 @@ const getNormalizedPost = async (post: CollectionEntry<'post'>): Promise<Post> =
     title: title,
     excerpt: excerpt,
     image: image,
+    imageSourceId,
 
     category: category,
     tags: tags,
@@ -113,8 +129,6 @@ const load = async function (): Promise<Array<Post>> {
   return results;
 };
 
-let _posts: Array<Post>;
-
 /** */
 export const isBlogEnabled = APP_BLOG.isEnabled;
 export const isRelatedPostsEnabled = APP_BLOG.isRelatedPostsEnabled;
@@ -132,11 +146,12 @@ export const blogPostsPerPage = APP_BLOG?.postsPerPage;
 
 /** */
 export const fetchPosts = async (): Promise<Array<Post>> => {
-  if (!_posts) {
-    _posts = await load();
+  // Avoid stale static paths during `astro dev` when content files change.
+  if (import.meta.env.DEV) {
+    return await load();
   }
 
-  return _posts;
+  return await load();
 };
 
 /** */

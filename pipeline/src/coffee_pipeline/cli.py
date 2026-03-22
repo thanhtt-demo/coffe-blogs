@@ -8,6 +8,8 @@ import click
 from dotenv import load_dotenv
 from slugify import slugify
 
+from .local_images import localize_markdown_images
+
 
 def _setup_stdout() -> None:
     """Reconfigure stdout/stderr to UTF-8 on Windows (default cp1252 breaks Vietnamese)."""
@@ -95,6 +97,13 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
 
     # Tao filename tu tieu de trong frontmatter
     filename = _derive_filename(draft, topic)
+
+    try:
+        draft, localization = localize_markdown_images(draft, Path(filename).stem)
+    except Exception as e:
+        click.secho(f"[FAILED] Khong the localize image: {e}", fg="red", err=True)
+        sys.exit(1)
+
     output_path = output_dir / filename
 
     output_path.write_text(draft, encoding="utf-8")
@@ -112,7 +121,47 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
     _echo(f"  Score    : {score:.1f}/10 ({'passed' if passed else 'max revisions reached'})")
     _echo(f"  Revisions: {revisions}")
     _echo(f"  Size     : {len(draft):,} chars")
+    _echo(f"  Images   : localized {localization['rewritten']} references, downloaded {localization['downloaded']} files")
     _echo("\nMo Astro dev server va truy cap /blog de xem bai viet moi.")
+
+
+@main.command("localize-images")
+@click.option(
+    "--posts-dir",
+    default=str(Path(__file__).parent.parent.parent.parent / "src" / "data" / "post"),
+    show_default=True,
+    help="Thu muc chua bai post can migrate",
+)
+@click.option("--post", help="Path den file post cu the can localize")
+@click.option("--overwrite", is_flag=True, help="Ghi de image local neu file da ton tai")
+def localize_images(posts_dir: str, post: str | None, overwrite: bool) -> None:
+    """Download remote images ve public/images/posts va rewrite markdown sang local path."""
+    targets = [Path(post)] if post else sorted(Path(posts_dir).glob("*.md")) + sorted(Path(posts_dir).glob("*.mdx"))
+
+    if not targets:
+        _echo("Khong tim thay bai viet nao de migrate.")
+        return
+
+    updated_files = 0
+    rewritten_total = 0
+    downloaded_total = 0
+
+    for post_path in targets:
+        original = post_path.read_text(encoding="utf-8")
+        updated, summary = localize_markdown_images(original, post_path.stem, overwrite=overwrite)
+        if updated == original:
+            continue
+
+        post_path.write_text(updated, encoding="utf-8")
+        updated_files += 1
+        rewritten_total += summary["rewritten"]
+        downloaded_total += summary["downloaded"]
+        _echo(f"[localized] {post_path.name}: {summary['rewritten']} refs, {summary['downloaded']} files")
+
+    _echo("")
+    _echo(f"[DONE] Updated {updated_files} post(s)")
+    _echo(f"  Rewritten : {rewritten_total}")
+    _echo(f"  Downloaded: {downloaded_total}")
 
 
 def _save_pipeline_cache(topic: str, final_state: dict) -> None:

@@ -19,7 +19,7 @@ def review_node(state: ResearchState) -> dict:
 
     # Dry-run mode: auto-pass
     if os.getenv("PIPELINE_DRY_RUN"):
-        print(f"[Review] DRY RUN -- auto-pass")
+        print("[Review] DRY RUN -- auto-pass")
         return {
             "review_score": 9.0,
             "review_passed": True,
@@ -34,12 +34,14 @@ def review_node(state: ResearchState) -> dict:
 Review bài viết blog về "{topic}" theo 3 tiêu chí sau:
 
 1. **Factual Accuracy** (0-10): Kiến thức cà phê có đúng không? \
-Có lỗi khoa học nào (nhiệt độ, phản ứng hóa học, tên giống cà phê)?
+Có lỗi khoa học nào (nhiệt độ, phản ứng hóa học, tên giống cà phê)? Nếu title có số đếm \
+thì kiểm tra số đó có đúng với nội dung và taxonomy được bài bảo vệ hay không.
 2. **Tone & Style** (0-10): Ngôn từ có tự nhiên không? Có bị AI-sounding \
 (sáo rỗng, quá template, không có personality)? Có giống Data Engineer đam mê \
-cà phê đang chia sẻ thực sự?
+cà phê đang chia sẻ thực sự? Trừ điểm nếu dùng heading kiểu mẫu như "Mở đầu", \
+"Kết luận", "Tổng quan" một cách máy móc.
 3. **Formatting** (0-10): YAML frontmatter có đúng chuẩn Astro (publishDate, title, \
-excerpt, image, category, tags, author)? Markdown structure hợp lý?
+excerpt, image, category, tags, author, references)? Markdown structure hợp lý?
 
 Score tổng = trung bình 3 tiêu chí. Passed nếu score >= {_PASS_THRESHOLD}.
 
@@ -72,7 +74,7 @@ BÀI VIẾT CẦN REVIEW:
         max_tokens=1024,
         temperature=0.2,
     )
-    in_tok  = usage.get("inputTokens",  "?")
+    in_tok = usage.get("inputTokens", "?")
     out_tok = usage.get("outputTokens", "?")
     print(f"[Review] Response: input={in_tok} tok, output={out_tok} tok")
 

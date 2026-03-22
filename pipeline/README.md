@@ -82,7 +82,20 @@ coffee-research research --topic "lịch sử cà phê Arabica" --category nguon
 ```
 
 File `.md` được tạo tự động tại `src/data/post/` với frontmatter Astro chuẩn.  
+Ảnh remote sẽ được tải về `public/images/posts/<slug>/` và markdown sẽ được rewrite sang local path trước khi lưu.  
 Tất cả artifacts trung gian được cache tại `pipeline/cache/<slug>/`.
+
+### Migrate bài cũ sang ảnh local
+
+```bash
+coffee-research localize-images
+```
+
+Hoặc chỉ migrate một bài:
+
+```bash
+coffee-research localize-images --post ../src/data/post/ten-bai.md
+```
 
 ### Categories
 

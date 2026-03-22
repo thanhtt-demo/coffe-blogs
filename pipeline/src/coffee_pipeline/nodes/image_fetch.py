@@ -14,7 +14,7 @@ _POSTS_DIR = Path(__file__).parent.parent.parent.parent.parent / "src" / "data" 
 
 def _photo_id(url: str) -> str:
     """Extract the Unsplash photo ID from a URL for deduplication.
-    
+
     e.g. https://images.unsplash.com/photo-1762788115507-5af20c95158f?...  →  photo-1762788115507-5af20c95158f
     Falls back to the bare URL if pattern doesn't match.
     """
@@ -30,9 +30,14 @@ def _load_existing_covers() -> set[str]:
     for md_file in _POSTS_DIR.glob("*.md"):
         try:
             text = md_file.read_text(encoding="utf-8", errors="ignore")
-            m = re.search(r"^image:\s*['\"]?(https?://[^\s'\"]+)", text, re.MULTILINE)
-            if m:
-                ids.add(_photo_id(m.group(1)))
+            source_match = re.search(r"^imageSourceId:\s*['\"]?([^\s'\"]+)", text, re.MULTILINE)
+            if source_match:
+                ids.add(source_match.group(1))
+                continue
+
+            image_match = re.search(r"^image:\s*['\"]?(https?://[^\s'\"]+)", text, re.MULTILINE)
+            if image_match:
+                ids.add(_photo_id(image_match.group(1)))
         except Exception:
             pass
     print(f"[ImageFetch] Loaded {len(ids)} existing cover photo IDs from {_POSTS_DIR}")
@@ -42,7 +47,7 @@ def _load_existing_covers() -> set[str]:
 def _pick_unused(pool: list[dict], used_ids: set[str]) -> dict | None:
     """Return the first photo from pool whose ID is not in used_ids, or None."""
     for photo in pool:
-        pid = _photo_id(photo["url"])
+        pid = photo.get("source_id") or _photo_id(photo["url"])
         if pid not in used_ids:
             return photo
     return None
@@ -84,7 +89,6 @@ def image_fetch_node(state: ResearchState) -> dict:
     print(f"[ImageFetch] Fetching {len(fetch_jobs)} jobs × {_POOL_SIZE} candidates in parallel...")
 
     # Fetch pools in parallel
-    job_map: dict[str, dict] = {key: sec for key, sec in fetch_jobs}
     pools: dict[str, list[dict]] = {}
     with ThreadPoolExecutor(max_workers=len(fetch_jobs)) as executor:
         futures = {
@@ -108,7 +112,7 @@ def image_fetch_node(state: ResearchState) -> dict:
     if "cover" in pools:
         cover = _pick_unused(pools["cover"], used_ids)
         if cover:
-            used_ids.add(_photo_id(cover["url"]))
+            used_ids.add(cover.get("source_id") or _photo_id(cover["url"]))
             print(f"[ImageFetch] ✓ cover → {cover['url'][:70]}...")
         else:
             print(f"[ImageFetch] ✗ cover → all {len(pools['cover'])} candidates already used")
@@ -124,7 +128,7 @@ def image_fetch_node(state: ResearchState) -> dict:
             continue
         img = _pick_unused(pools[key], used_ids)
         if img:
-            used_ids.add(_photo_id(img["url"]))
+            used_ids.add(img.get("source_id") or _photo_id(img["url"]))
             section_images.append(img)
             print(f"[ImageFetch] ✓ {key} ({label!r}) → {img['url'][:70]}...")
         else:
@@ -135,4 +139,10 @@ def image_fetch_node(state: ResearchState) -> dict:
     total = 1 + len(sections) if cover_query else len(sections)
     print(f"[ImageFetch] Total assigned: {found}/{total} unique images")
     return {"article_images": {"cover": cover, "sections": section_images}}
+
+
+__all__ = ["image_fetch_node"]
+# End of file
+
+
 

@@ -163,3 +163,52 @@ def test_derive_filename_fallback_to_topic():
     filename = _derive_filename(draft, "V60 Brew Ratio")
     assert filename.endswith(".md")
     assert "v60" in filename.lower()
+
+
+def test_localize_markdown_images_rewrites_cover_and_inline_images(tmp_path, monkeypatch):
+    from coffee_pipeline.local_images import localize_markdown_images
+
+    def fake_download(_url: str):
+        return (b"image-bytes", ".jpg")
+
+    monkeypatch.setattr("coffee_pipeline.local_images._download_image", fake_download)
+
+    markdown = (
+        "---\n"
+        "title: 'Demo post'\n"
+        "image: 'https://images.unsplash.com/photo-abc123?fm=jpg'\n"
+        "---\n\n"
+        "![inline](https://images.unsplash.com/photo-def456?fm=jpg)\n"
+    )
+
+    localized, summary = localize_markdown_images(markdown, "demo-post", public_dir=tmp_path)
+
+    assert "image: '/images/posts/demo-post/cover.jpg'" in localized
+    assert "imageSourceId: 'photo-abc123'" in localized
+    assert "![inline](/images/posts/demo-post/inline-01.jpg)" in localized
+    assert summary == {"downloaded": 2, "rewritten": 2}
+    assert (tmp_path / "images" / "posts" / "demo-post" / "cover.jpg").exists()
+    assert (tmp_path / "images" / "posts" / "demo-post" / "inline-01.jpg").exists()
+
+
+def test_localize_markdown_images_leaves_local_content_unchanged(tmp_path, monkeypatch):
+    from coffee_pipeline.local_images import localize_markdown_images
+
+    def fail_download(_url: str):
+        raise AssertionError("download should not be called")
+
+    monkeypatch.setattr("coffee_pipeline.local_images._download_image", fail_download)
+
+    markdown = (
+        "---\n"
+        "title: 'Demo post'\n"
+        "image: '/images/posts/demo-post/cover.jpg'\n"
+        "imageSourceId: 'photo-abc123'\n"
+        "---\n\n"
+        "![inline](/images/posts/demo-post/inline-01.jpg)\n"
+    )
+
+    localized, summary = localize_markdown_images(markdown, "demo-post", public_dir=tmp_path)
+
+    assert localized == markdown
+    assert summary == {"downloaded": 0, "rewritten": 0}

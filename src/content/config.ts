@@ -1,6 +1,8 @@
 import { z, defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 
+const isLocalPostImage = (value: string) => !/^https?:\/\//i.test(value);
+
 const metadataDefinition = () =>
   z
     .object({
@@ -55,7 +57,8 @@ const postCollection = defineCollection({
 
     title: z.string(),
     excerpt: z.string().optional(),
-    image: z.string().optional(),
+    image: z.string().refine(isLocalPostImage, 'Post cover image must use a local path.').optional(),
+    imageSourceId: z.string().optional(),
 
     category: z.string().optional(),
     tags: z.array(z.string()).optional(),

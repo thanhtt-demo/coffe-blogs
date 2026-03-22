@@ -7,7 +7,7 @@ export const headerData = {
       href: getPermalink('/'),
     },
     {
-      text: 'Blogs',
+      text: 'Bài Viết',
       href: getBlogPermalink(),
     },
     {
@@ -41,11 +41,7 @@ export const footerData = {
     { text: 'Điều Khoản', href: getPermalink('/terms') },
     { text: 'Chính Sách Bảo Mật', href: getPermalink('/privacy') },
   ],
-  socialLinks: [
-    { ariaLabel: 'Facebook', icon: 'tabler:brand-facebook', href: '#' },
-    { ariaLabel: 'Instagram', icon: 'tabler:brand-instagram', href: '#' },
-    { ariaLabel: 'RSS', icon: 'tabler:rss', href: getAsset('/rss.xml') },
-  ],
+  socialLinks: [{ ariaLabel: 'RSS', icon: 'tabler:rss', href: getAsset('/rss.xml') }],
   footNote: `
     ☕ <strong>Ba Tê và Cà Phê</strong> · Mọi quyền được bảo lưu.
   `,

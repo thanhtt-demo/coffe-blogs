@@ -26,12 +26,12 @@ AI pipeline tự động nghiên cứu và soạn thảo bài blog cho **Ba Tê 
 
 ## Yêu cầu
 
-| Thành phần | Yêu cầu |
-|---|---|
-| Python | 3.12+ |
-| LLM | OpenAI API key **hoặc** AWS Bedrock access |
-| Unsplash | API key miễn phí tại [unsplash.com/developers](https://unsplash.com/developers) |
-| Crawl4AI | Playwright Chromium (cài một lần, xem bên dưới) |
+| Thành phần | Yêu cầu                                                                         |
+| ---------- | ------------------------------------------------------------------------------- |
+| Python     | 3.12+                                                                           |
+| LLM        | OpenAI API key **hoặc** AWS Bedrock access                                      |
+| Unsplash   | API key miễn phí tại [unsplash.com/developers](https://unsplash.com/developers) |
+| Crawl4AI   | Playwright Chromium (cài một lần, xem bên dưới)                                 |
 
 ## Cài đặt
 
@@ -86,11 +86,11 @@ Tất cả artifacts trung gian được cache tại `pipeline/cache/<slug>/`.
 
 ### Categories
 
-| Slug | Chủ đề |
-|---|---|
-| `nguon-goc` | Nguồn gốc, terroir, giống cà phê |
-| `rang-xay` | Khoa học rang, hóa học Maillard |
-| `pha-che` | Phương pháp pha chế, tỷ lệ, kỹ thuật |
+| Slug         | Chủ đề                                  |
+| ------------ | --------------------------------------- |
+| `nguon-goc`  | Nguồn gốc, terroir, giống cà phê        |
+| `rang-xay`   | Khoa học rang, hóa học Maillard         |
+| `pha-che`    | Phương pháp pha chế, tỷ lệ, kỹ thuật    |
 | `nghien-cuu` | Nghiên cứu khoa học, sức khỏe, caffeine |
 
 ### Tùy chọn
@@ -161,16 +161,20 @@ pipeline/
 ## Chi tiết các nodes
 
 ### `query_gen_node`
+
 LLM sinh ra 6 search queries (3 tiếng Anh + 3 tiếng Nhật) từ chủ đề gốc — tăng độ phủ nghiên cứu đa ngôn ngữ.
 
 ### `research_node`
+
 Tìm kiếm song song từ 4 nguồn (mỗi nguồn chạy với tất cả 6 queries):
+
 - **ArXiv** — academic preprints về coffee science
 - **OpenAlex** — 250M+ scholarly papers, miễn phí, 100k request/ngày
 - **DuckDuckGo** — web search, ưu tiên domain uy tín (perfectdailygrind.com, ico.org, v.v.)
 - **YouTube** — videos sắp xếp theo lượt xem, từ kênh uy tín
 
 ### `extract_node`
+
 - ArXiv / OpenAlex → dùng abstract sẵn có (không crawl lại)
 - Web URL → **Crawl4AI** Playwright headless (`fit_markdown` — loại bỏ nav/sidebar/ads)
 - YouTube → `youtube-transcript-api` (phụ đề, không stream video)
@@ -178,20 +182,26 @@ Tìm kiếm song song từ 4 nguồn (mỗi nguồn chạy với tất cả 6 qu
 Budget: 15,000 chars/source, tổng 80,000 chars. Kết quả cache vào `pipeline/cache/<slug>/sources.json` và `docs.json`.
 
 ### `outline_node`
+
 LLM tạo cấu trúc bài viết: tiêu đề, các section, mô tả nội dung mỗi section, và `image_query` riêng cho từng section.
 
 ### `image_fetch_node`
+
 Gọi Unsplash API lấy ảnh thực (không phải URL bịa):
+
 - 1 ảnh cover theo `cover_image_query`
 - 1 ảnh per section theo `image_query` của section đó
 
 Trả về `{"cover": {...}, "sections": [{...}, ...]}` — 1:1 với sections.
 
 ### `draft_node`
+
 LLM viết bài theo phong cách Ba Tê: chuyên sâu, mộc mạc, không AI-sounding. Mỗi section nhận URL ảnh đã verify để chèn đúng vị trí. Output là file `.md` với YAML frontmatter Astro đầy đủ.
 
 ### `review_node`
+
 LLM đánh giá theo 3 tiêu chí (mỗi tiêu chí 0–10):
+
 - **Factual Accuracy** — kiến thức cà phê có đúng không
 - **Tone & Style** — tự nhiên, không template, có personality
 - **Formatting** — frontmatter và Markdown structure chuẩn
@@ -200,16 +210,16 @@ Score trung bình `>= 8.0` → pass. Dưới ngưỡng → feedback chi tiết, 
 
 ## Tech stack
 
-| Package | Version | Dùng để |
-|---|---|---|
-| `langgraph` | 1.1.3 | Graph orchestration |
-| `openai` | ≥1.0.0 | LLM mặc định (gpt-5.4-mini) |
-| `boto3` | ≥1.38.0 | AWS Bedrock (tùy chọn) |
-| `crawl4ai` | ≥0.5.0 | Headless browser crawl |
-| `arxiv` | ≥2.1.3 | ArXiv API |
-| `httpx` | ≥0.28.0 | OpenAlex API |
-| `duckduckgo-search` | ≥7.0.0 | Web search (no API key) |
-| `yt-dlp` | ≥2025.1.1 | YouTube search |
-| `youtube-transcript-api` | ≥0.6.3 | YouTube transcript |
-| `python-slugify` | ≥8.0.4 | Tạo filename từ tiêu đề |
-| `click` | ≥8.1.8 | CLI |
+| Package                  | Version   | Dùng để                     |
+| ------------------------ | --------- | --------------------------- |
+| `langgraph`              | 1.1.3     | Graph orchestration         |
+| `openai`                 | ≥1.0.0    | LLM mặc định (gpt-5.4-mini) |
+| `boto3`                  | ≥1.38.0   | AWS Bedrock (tùy chọn)      |
+| `crawl4ai`               | ≥0.5.0    | Headless browser crawl      |
+| `arxiv`                  | ≥2.1.3    | ArXiv API                   |
+| `httpx`                  | ≥0.28.0   | OpenAlex API                |
+| `duckduckgo-search`      | ≥7.0.0    | Web search (no API key)     |
+| `yt-dlp`                 | ≥2025.1.1 | YouTube search              |
+| `youtube-transcript-api` | ≥0.6.3    | YouTube transcript          |
+| `python-slugify`         | ≥8.0.4    | Tạo filename từ tiêu đề     |
+| `click`                  | ≥8.1.8    | CLI                         |

@@ -1,0 +1,72 @@
+site:
+  name: 'Ba Tê và Cà Phê'
+  site: 'https://bate-caphe.pages.dev'
+  base: '/'
+  trailingSlash: false
+
+  googleSiteVerificationId: false
+
+# Default SEO metadata
+metadata:
+  title:
+    default: 'Ba Tê và Cà Phê'
+    template: '%s — Ba Tê và Cà Phê'
+  description: 'Blog chia sẻ kiến thức chuyên sâu về cà phê Việt Nam và thế giới – nguồn gốc, rang xay, pha chế và nghiên cứu khoa học.'
+  robots:
+    index: true
+    follow: true
+  openGraph:
+    site_name: 'Ba Tê và Cà Phê'
+    images:
+      - url: '~/assets/images/coffee-hero.png'
+        width: 1200
+        height: 628
+    type: website
+  twitter:
+    handle: '@bate_caphe'
+    site: '@bate_caphe'
+    cardType: summary_large_image
+
+i18n:
+  language: vi
+  textDirection: ltr
+
+apps:
+  blog:
+    isEnabled: true
+    postsPerPage: 9
+
+    post:
+      isEnabled: true
+      permalink: '/blog/%slug%'
+      robots:
+        index: true
+
+    list:
+      isEnabled: true
+      pathname: 'blog'
+      robots:
+        index: true
+
+    category:
+      isEnabled: true
+      pathname: 'danh-muc'
+      robots:
+        index: true
+
+    tag:
+      isEnabled: true
+      pathname: 'chu-de'
+      robots:
+        index: false
+
+    isRelatedPostsEnabled: true
+    relatedPostsCount: 4
+
+analytics:
+  vendors:
+    googleAnalytics:
+      id: null # or "G-XXXXXXXXXX"
+
+ui:
+  theme: 'light:only'

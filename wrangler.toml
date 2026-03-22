@@ -1,0 +1,8 @@
+# Cloudflare Pages project configuration
+# https://developers.cloudflare.com/pages/framework-guides/deploy-an-astro-site/
+
+name = "bate-caphe"
+pages_build_output_dir = "dist"
+
+[vars]
+NODE_VERSION = "20"

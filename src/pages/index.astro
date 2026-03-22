@@ -1,0 +1,225 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+
+import Hero from '~/components/widgets/Hero.astro';
+import Note from '~/components/widgets/Note.astro';
+import Features from '~/components/widgets/Features.astro';
+import Content from '~/components/widgets/Content.astro';
+import BlogLatestPosts from '~/components/widgets/BlogLatestPosts.astro';
+import FAQs from '~/components/widgets/FAQs.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+
+const metadata = {
+  title: 'Ba Tê và Cà Phê — Kiến Thức Cà Phê Chuyên Sâu',
+  ignoreTitleTemplate: true,
+};
+---
+
+<Layout metadata={metadata}>
+  <!-- Hero Widget -->
+  <Hero
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Khám Phá Blog',
+        href: '/blog',
+        icon: 'tabler:coffee',
+      },
+      { text: 'Về Ba Tê', href: '/about' },
+    ]}
+    image={{ src: '~/assets/images/coffee-hero.png', alt: 'Ba Tê và Cà Phê - Hero Image' }}
+  >
+    <Fragment slot="title">
+      Từ Hạt Cà Phê<br />
+      <span class="text-accent">Đến Tách Hoàn Hảo</span>
+    </Fragment>
+
+    <Fragment slot="subtitle">
+      <span class="hidden sm:inline">
+        Kiến thức chuyên sâu về cà phê Việt Nam và thế giới — nguồn gốc,
+        khoa học rang xay, nghệ thuật pha chế và những nghiên cứu mới nhất.
+      </span>
+      <span class="block mb-1 sm:hidden font-bold text-amber-700">☕ Khám phá thế giới cà phê cùng Ba Tê.</span>
+    </Fragment>
+  </Hero>
+
+  <!-- Note Widget -->
+  <Note title="Triết lý:" description="Một ngày bắt đầu sau ly cà phê. <br />Hiểu sâu hơn, thưởng thức trọn vẹn hơn — mỗi tách cà phê là một câu chuyện." />
+
+  <!-- Features Widget -->
+  <Features
+    id="features"
+    tagline="Nội dung"
+    title="Bạn sẽ tìm thấy gì ở đây?"
+    subtitle="Blog kết hợp đam mê cà phê với tư duy dữ liệu — mang đến những góc nhìn chuyên sâu, có căn cứ khoa học."
+    items={[
+      {
+        title: 'Nguồn Gốc & Terroir',
+        description:
+          'Khám phá câu chuyện của từng vùng cà phê — từ Cầu Đất, Di Linh đến Ethiopia, Colombia. Đất đai, khí hậu và văn hóa tạo nên hương vị.',
+        icon: 'tabler:map-pin',
+      },
+      {
+        title: 'Khoa Học Rang Xay',
+        description:
+          'Maillard reaction, caramelization, phát triển mùi hương qua từng giai đoạn rang. Hiểu để kiểm soát và sáng tạo.',
+        icon: 'tabler:flame',
+      },
+      {
+        title: 'Nghệ Thuật Pha Chế',
+        description:
+          'Từ phin truyền thống đến Pour Over, Espresso, AeroPress — tỷ lệ, nhiệt độ, thời gian chiết xuất tối ưu.',
+        icon: 'tabler:droplet',
+      },
+      {
+        title: 'Nghiên Cứu Khoa Học',
+        description:
+          'Tổng hợp từ ArXiv, Semantic Scholar — caffeine, polyphenols, tác động sức khỏe và các phát hiện mới nhất về cà phê.',
+        icon: 'tabler:microscope',
+      },
+      {
+        title: 'Thử Nếm & Đánh Giá',
+        description:
+          'Chú thích cảm quan chuẩn SCA — nhận diện acidity, body, sweetness, aftertaste. Nâng tầm sensory của bạn.',
+        icon: 'tabler:stars',
+      },
+      {
+        title: 'Tư Duy Dữ Liệu',
+        description:
+          'Phân tích xu hướng thị trường cà phê Việt Nam, chuỗi giá trị từ nông trại đến tách — góc nhìn từ một Data Engineer.',
+        icon: 'tabler:chart-bar',
+      },
+    ]}
+  />
+
+  <!-- Content Widget - Featured topic -->
+  <Content
+    isReversed
+    tagline="Chủ đề nổi bật"
+    title="Cà Phê Việt Nam: Từ Robusta Đến Specialty"
+    items={[
+      {
+        title: 'Vựa cà phê thứ 2 thế giới',
+        description:
+          'Việt Nam xuất khẩu hơn 1.8 triệu tấn cà phê/năm, chủ yếu Robusta. Nhưng phong trào Specialty Coffee đang thay đổi cuộc chơi.',
+      },
+      {
+        title: 'Arabica vùng cao',
+        description:
+          'Cầu Đất (Lâm Đồng), Sơn La, Điện Biên — những vùng Arabica Việt Nam đang được thế giới chú ý với profile hương vị đặc trưng.',
+      },
+      {
+        title: 'Chuỗi giá trị minh bạch',
+        description:
+          'Từ canh tác tự nhiên, chế biến ướt/mật/khô đến rang thủ công — mỗi quyết định ảnh hưởng đến tách cà phê cuối cùng.',
+      },
+    ]}
+    image={{
+      src: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2061&q=80',
+      alt: 'Cà phê Việt Nam',
+    }}
+  >
+    <Fragment slot="content">
+      <h3 class="text-2xl font-bold tracking-tight sm:text-3xl mb-2">Hiểu cà phê Việt, tự hào cà phê Việt</h3>
+      Không chỉ uống — mà hiểu và trân trọng từng giọt cà phê.
+    </Fragment>
+
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-amber-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Content>
+
+  <!-- Content Widget - AI Research -->
+  <Content
+    isAfterContent
+    tagline="Quy Trình"
+    title="AI Hỗ Trợ. Con Người Kiểm Chứng."
+    items={[
+      {
+        title: 'Thu thập & phân tích bởi AI',
+        description:
+          'AWS Bedrock (Claude) và LangGraph tự động tìm kiếm, đọc hiểu và tổng hợp tài liệu từ ArXiv, Semantic Scholar, web — xử lý hàng trăm nguồn mà một người không thể làm thủ công.',
+      },
+      {
+        title: 'Đánh giá bởi người có chuyên môn',
+        description:
+          'Với tư duy phân tích của một Data Engineer, mình kiểm tra tính Logic, độ tin cậy nguồn, ngữ cảnh văn hóa — AI giỏi tổng hợp, nhưng cần con người để hiểu đúng.',
+      },
+      {
+        title: 'Thực nghiệm & kiểm chứng thực tế',
+        description:
+          'Những gì liên quan đến pha chế, rang xay hay cảm quan đều được mình tự thử nghiệm tại nhà trước khi đăng — kiến thức phải đi cùng trải nghiệm thật.',
+      },
+    ]}
+    image={{
+      src: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+      alt: 'Coffee research',
+    }}
+  >
+    <Fragment slot="content">
+      <h3 class="text-2xl font-bold tracking-tight sm:text-3xl mb-2">Công nghệ phục vụ đam mê</h3>
+      Không phải AI viết blog — AI giúp mình nghiên cứu sâu hơn, nhanh hơn.
+    </Fragment>
+
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-amber-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Content>
+
+  <!-- BlogLatestPosts Widget -->
+  <BlogLatestPosts
+    title="Bài Viết Mới Nhất"
+    information="Những bài viết mới nhất về cà phê — từ kiến thức cơ bản đến chuyên sâu, từ lịch sử đến khoa học hiện đại."
+  />
+
+  <!-- FAQs Widget -->
+  <FAQs
+    title="Hỏi Đáp Về Cà Phê"
+    subtitle="Những câu hỏi thường gặp về cà phê mà Ba Tê muốn chia sẻ kiến thức."
+    tagline="FAQ"
+    classes={{ container: 'max-w-6xl' }}
+    items={[
+      {
+        title: 'Sự khác nhau giữa Arabica và Robusta là gì?',
+        description:
+          'Arabica (Coffea arabica) thường có hương vị phức tạp hơn, độ chua tinh tế, ít caffeine hơn (~1.5%). Robusta (Coffea canephora) có body dày hơn, đắng hơn, caffeine cao hơn (~2.7%) và kháng sâu bệnh tốt hơn. Việt Nam trồng chủ yếu Robusta (chiếm ~95% diện tích).',
+      },
+      {
+        title: 'Cold brew và iced coffee khác nhau thế nào?',
+        description:
+          'Cold brew được chiết xuất bằng nước lạnh trong 12-24 giờ — ít acid, ngọt tự nhiên, body mượt. Iced coffee là cà phê pha nóng xong đổ lên đá — giữ được nhiều hương thơm bay nhưng acid cao hơn. Hai phương pháp cho hương vị khác nhau hoàn toàn.',
+      },
+      {
+        title: 'Nhiệt độ nước ảnh hưởng như thế nào đến pha chế?',
+        description:
+          'Nhiệt độ lý tưởng thường từ 90-96°C. Nước quá nóng (>96°C) chiết xuất quá mức — đắng và harsh. Nước quá nguội (<85°C) chiết xuất thiếu — chua và flat. Với cà phê rang nhẹ nên dùng nhiệt độ cao hơn, rang đậm thì thấp hơn một chút.',
+      },
+      {
+        title: 'Cà phê chồn (Kopi Luwak) có thực sự ngon hơn không?',
+        description:
+          'Về mặt khoa học, enzyme trong ruột cầy hương làm thay đổi protein và giảm một số hợp chất đắng. Tuy nhiên, giá trị thực sự không tương xứng với mức giá cao. Nhiều chuyên gia Q-Grader cho rằng specialty coffee chất lượng cao hoàn toàn có thể vượt trội hơn.',
+      },
+    ]}
+  />
+
+  <!-- CallToAction Widget -->
+  <CallToAction
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Đọc Blog Ngay',
+        href: '/blog',
+        icon: 'tabler:coffee',
+      },
+    ]}
+  >
+    <Fragment slot="title">
+      Sẵn sàng khám phá<br class="block sm:hidden" /><span class="sm:whitespace-nowrap"> thế giới cà phê?</span>
+    </Fragment>
+
+    <Fragment slot="subtitle">
+      Mỗi tuần một bài viết mới — kiến thức, nghiên cứu và những câu chuyện<br class="hidden md:inline" />
+      thú vị từ thế giới cà phê đang chờ bạn.
+    </Fragment>
+  </CallToAction>
+</Layout>

@@ -1,0 +1,106 @@
+---
+import Features2 from '~/components/widgets/Features2.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import Steps2 from '~/components/widgets/Steps2.astro';
+import Layout from '~/layouts/PageLayout.astro';
+
+const metadata = {
+  title: 'Về Ba Tê',
+};
+---
+
+<Layout metadata={metadata}>
+  <!-- Hero Widget -->
+  <Hero
+    tagline="Về Ba Tê"
+    image={{
+      src: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+      alt: 'Ba Tê và Cà Phê',
+    }}
+  >
+    <Fragment slot="title">
+      Xin chào, mình là<br />
+      <span class="text-accent dark:text-white"> Ba Tê ☕</span>
+    </Fragment>
+
+    <Fragment slot="subtitle">
+      Từng là một người tin rằng <b>'cà phê thì phải đắng'</b>, nhưng một ly <b>Espresso Arabica</b> ngày đó đã thay đổi hoàn toàn định kiến trong mình. 
+      <br />Vị chua tinh tế và hương thơm ấy không chỉ gây nghiện mà còn thôi thúc mình phải tìm hiểu sâu hơn.
+      <br />Mình là một <b>Data Engineer</b>, và đây là góc nhỏ để mình kết nối tư duy logic với đam mê nguyên bản. Blog này ra đời để kể về hành trình học hỏi, nơi dữ liệu và cà phê cùng nhau tạo nên những trải nghiệm thú vị và đa sắc màu.
+    </Fragment>
+  </Hero>
+
+  <!-- Steps2 Widget - Values -->
+  <Steps2
+    title="Tại sao mình viết blog này?"
+    subtitle="Ba Tê muốn xây dựng một nguồn kiến thức cà phê tiếng Việt — chuyên sâu, có căn cứ khoa học, dễ tiếp cận."
+    items={[
+      {
+        title: 'Kiến thức có chiều sâu',
+        description:
+          'Không chỉ "uống ngon là được" — mình muốn hiểu tại sao nó ngon, từ thổ nhưỡng, giống cây, cách chế biến đến kỹ thuật pha chế. Và chia sẻ điều đó với cộng đồng.',
+        icon: 'tabler:book',
+      },
+      {
+        title: 'Ứng dụng AI có trách nhiệm',
+        description:
+          'Blog sử dụng LangGraph + AWS Bedrock để hỗ trợ nghiên cứu từ hàng trăm nguồn (ArXiv, Semantic Scholar, web). Mọi bài đều được mình nghiên cứu, đánh giá, thậm chí thử nghiệm trước khi đăng.',
+        icon: 'tabler:robot',
+      },
+      {
+        title: 'Cộng đồng cà phê Việt',
+        description:
+          'Việt Nam là cường quốc cà phê thế giới nhưng tài nguyên kiến thức tiếng Việt còn ít. Mình muốn góp phần thay đổi điều đó.',
+        icon: 'tabler:users',
+      },
+    ]}
+  />
+
+  <!-- Steps2 Widget - Journey -->
+  <Steps2
+    title="Hành Trình Cà Phê"
+    isReversed={true}
+    callToAction={{
+      text: 'Xem Blog',
+      href: '/blog',
+    }}
+    items={[
+      {
+        title: 'Bắt đầu với phin truyền thống',
+        description: 'Mọi thứ bắt đầu từ ly cà phê sữa đá vỉa hè — đơn giản nhưng đậm đà. Từ đó dần dần tò mò về thế giới đằng sau tách cà phê.',
+        icon: 'tabler:coffee',
+      },
+      {
+        title: 'Khám phá Specialty Coffee',
+        description: 'Pour Over, V60, AeroPress — mỗi phương pháp là một bài học mới về chiết xuất, tỷ lệ và sự tinh tế của hương vị.',
+        icon: 'tabler:droplet',
+      },
+      {
+        title: 'Nghiên cứu chuỗi giá trị',
+        description: 'Ghé thăm các nông trại Cầu Đất, tìm hiểu về chế biến ướt và khô, kết nối với các roaster độc lập — hiểu cà phê từ gốc rễ.',
+        icon: 'tabler:map-pin',
+      },
+    ]}
+  />
+
+  <!-- Features2 Widget - Contact -->
+  <Features2
+    title="Kết Nối Với Mình"
+    tagline="Liên hệ"
+    columns={2}
+    items={[
+      {
+        title: 'Góp ý & Chia sẻ',
+        description:
+          'Bạn có kinh nghiệm về cà phê muốn chia sẻ? Có câu hỏi hoặc muốn đặt hàng? Hãy nhắn tin cho mình — mình luôn sẵn sàng lắng nghe.',
+        icon: 'tabler:messages',
+      },
+      {
+        title: 'Hợp tác',
+        description:
+          'Mình mở cửa với các cơ hội hợp tác — viết bài, review sản phẩm, tư vấn kiến thức cà phê hoặc cùng xây dựng nội dung chất lượng.',
+        icon: 'tabler:users',
+      },
+    ]}
+  />
+</Layout>

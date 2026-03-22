@@ -47,21 +47,21 @@ Nếu nói kiểu đời thường hơn: uống trà giống như mở máy từ
 
 Về mặt con số, chênh lệch khá dễ thấy. Theo Healthline và MedicineNet, một số mức điển hình thường gặp là:
 
-| Đồ uống | Lượng caffeine ước tính mỗi khẩu phần |
-|---|---:|
-| Trà xanh (1 cốc ~240 ml) | **20–45 mg** |
-| Trà đen (1 cốc ~240 ml) | **40–70 mg** |
-| Matcha (1 khẩu phần) | **30–70 mg** |
-| Espresso (1 shot ~30 ml) | **60–75 mg** |
-| Cà phê pha lọc / drip (1 cốc ~240 ml) | **90–120 mg** |
-| Cà phê phin đậm | thường nằm trong vùng **cao hơn trà khá rõ**, tùy lượng bột và thời gian chiết xuất |
+| Đồ uống                               |                                               Lượng caffeine ước tính mỗi khẩu phần |
+| ------------------------------------- | ----------------------------------------------------------------------------------: |
+| Trà xanh (1 cốc ~240 ml)              |                                                                        **20–45 mg** |
+| Trà đen (1 cốc ~240 ml)               |                                                                        **40–70 mg** |
+| Matcha (1 khẩu phần)                  |                                                                        **30–70 mg** |
+| Espresso (1 shot ~30 ml)              |                                                                        **60–75 mg** |
+| Cà phê pha lọc / drip (1 cốc ~240 ml) |                                                                       **90–120 mg** |
+| Cà phê phin đậm                       | thường nằm trong vùng **cao hơn trà khá rõ**, tùy lượng bột và thời gian chiết xuất |
 
 Điều mình thích ở bảng này là nó nhắc ta một chuyện rất thực tế: **không phải cứ “trà” là ít caffeine và “cà phê” là nhiều caffeine theo kiểu tuyệt đối**. Một ly matcha đậm hoặc trà đen ngâm lâu vẫn có thể lên đáng kể. Ngược lại, một shot espresso tuy đậm nhưng thể tích nhỏ hơn cà phê pha lọc. Còn cà phê phin Việt Nam thì lại là câu chuyện riêng: lượng bột nhiều, thời gian ngâm lâu, ly nào đậm là đậm thật.
 
 Một chi tiết nhỏ nhưng quan trọng: **kích cỡ ly, tỉ lệ nước, lượng lá/bột, thời gian ngâm và nhiệt độ nước** đều làm con số thay đổi. Healthline cũng nhấn mạnh caffeine trong đồ uống biến thiên rất mạnh theo cách pha, chứ không chỉ theo “trà hay cà phê”.
 
 ![Two teapots beside mortar and pestle](/images/posts/cafein-co-trong-tra-va-ca-phe-khac-nhau-nhu-the-nao/inline-01.jpg)
-*Hai loại đồ uống nhìn có vẻ gần nhau, nhưng hàm lượng caffeine thực tế lại khác khá xa.*
+_Hai loại đồ uống nhìn có vẻ gần nhau, nhưng hàm lượng caffeine thực tế lại khác khá xa._
 
 ### Vì sao trà cho cảm giác tỉnh táo “êm” hơn?
 
@@ -78,7 +78,7 @@ Một vài điểm đáng nhớ:
 > Trà không hẳn “ít tác động”, mà là tác động theo kiểu mềm hơn với nhiều người, nhất là khi có L-theanine đi kèm. — BBC Food, Verywell Health
 
 ![Green leaves and clear liquid inside teapot](/images/posts/cafein-co-trong-tra-va-ca-phe-khac-nhau-nhu-the-nao/inline-02.jpg)
-*Trà thường tạo cảm giác tỉnh táo nhẹ và đều, nhất là khi đi cùng L-theanine.*
+_Trà thường tạo cảm giác tỉnh táo nhẹ và đều, nhất là khi đi cùng L-theanine._
 
 ### Cà phê tác động nhanh hơn vì cách pha và cách uống
 
@@ -91,10 +91,10 @@ Theo BBC Food, caffeine đạt nồng độ đỉnh trong máu tương đối nh
 - **Cold brew**: nếu ngâm lâu và dùng nhiều bột, caffeine có thể rất cao.
 - **Cà phê phin**: thời gian tiếp xúc dài, lượng bột nhiều, dễ cho ly đậm và nặng đô.
 
-Một điểm mình từng thấy khá rõ khi thử cùng một loại hạt nhưng đổi độ xay: **xay mịn hơn không tự động đồng nghĩa với ly nào cũng “mạnh” hơn theo kiểu tuyến tính**. ArXiv paper *Uneven Extraction in Coffee Brewing* cho thấy khi xay quá mịn, dòng chảy và phân bố chiết xuất có thể trở nên không đồng đều; tức là không phải cứ mịn là chiết xuất tốt hơn hay caffeine tăng đều hơn. Nói gọn: **độ mịn chỉ là một biến trong cả hệ thống**, không phải nút vặn duy nhất.
+Một điểm mình từng thấy khá rõ khi thử cùng một loại hạt nhưng đổi độ xay: **xay mịn hơn không tự động đồng nghĩa với ly nào cũng “mạnh” hơn theo kiểu tuyến tính**. ArXiv paper _Uneven Extraction in Coffee Brewing_ cho thấy khi xay quá mịn, dòng chảy và phân bố chiết xuất có thể trở nên không đồng đều; tức là không phải cứ mịn là chiết xuất tốt hơn hay caffeine tăng đều hơn. Nói gọn: **độ mịn chỉ là một biến trong cả hệ thống**, không phải nút vặn duy nhất.
 
 ![Clear drinking glass with brown liquid](/images/posts/cafein-co-trong-tra-va-ca-phe-khac-nhau-nhu-the-nao/inline-03.jpg)
-*Pha cà phê không chỉ là chuyện ngon hay dở, mà còn quyết định caffeine đi vào ly nhiều hay ít.*
+_Pha cà phê không chỉ là chuyện ngon hay dở, mà còn quyết định caffeine đi vào ly nhiều hay ít._
 
 ### Cơ thể phản ứng với caffeine không giống nhau ở mọi người
 
@@ -113,7 +113,7 @@ Một số nguồn như Verywell Health và BBC Food nhắc rằng **trên 400 m
 Khi tôi làm việc ca tối ở nhà, tôi từng uống cà phê sau 4 giờ chiều rồi đêm đó nằm nghe trần nhà rất lâu. Lúc ấy tôi mới hiểu: caffeine không chỉ là chuyện “tỉnh hay không”, mà còn là chuyện **cơ thể mình có đủ thời gian để xử lý nó trước khi đi ngủ hay không**.
 
 ![White ceramic cup on white ceramic saucer](/images/posts/cafein-co-trong-tra-va-ca-phe-khac-nhau-nhu-the-nao/inline-04.jpg)
-*Có người hợp trà buổi chiều hơn cà phê, vì cảm giác tỉnh táo đến nhẹ hơn và ít làm tim đập nhanh.*
+_Có người hợp trà buổi chiều hơn cà phê, vì cảm giác tỉnh táo đến nhẹ hơn và ít làm tim đập nhanh._
 
 ## Uống trà hay cà phê tốt hơn cho bạn?
 
@@ -143,16 +143,16 @@ Cà phê có lợi thế ở chỗ nó thường cho lượng caffeine cao hơn 
 
 ### Một bảng nhỏ để chọn cho đỡ lăn tăn
 
-| Mục tiêu | Trà | Cà phê |
-|---|---|---|
-| Cần tỉnh nhanh | Có thể, nhưng thường nhẹ hơn | **Phù hợp hơn** |
-| Cần tập trung lâu | **Phù hợp** | Cũng phù hợp, nhưng dễ “gắt” hơn |
-| Dễ nhạy caffeine | **Thường dễ chịu hơn** | Có thể gây run, hồi hộp |
-| Muốn giảm caffeine | **Dễ kiểm soát hơn** | Khó hơn nếu uống ly lớn/đậm |
-| Uống chiều muộn | An toàn hơn nếu chọn loại nhẹ | Nên cẩn thận hơn |
+| Mục tiêu           | Trà                           | Cà phê                           |
+| ------------------ | ----------------------------- | -------------------------------- |
+| Cần tỉnh nhanh     | Có thể, nhưng thường nhẹ hơn  | **Phù hợp hơn**                  |
+| Cần tập trung lâu  | **Phù hợp**                   | Cũng phù hợp, nhưng dễ “gắt” hơn |
+| Dễ nhạy caffeine   | **Thường dễ chịu hơn**        | Có thể gây run, hồi hộp          |
+| Muốn giảm caffeine | **Dễ kiểm soát hơn**          | Khó hơn nếu uống ly lớn/đậm      |
+| Uống chiều muộn    | An toàn hơn nếu chọn loại nhẹ | Nên cẩn thận hơn                 |
 
 ![A kitchen counter with a tea kettle, oranges, and other kitchen items](/images/posts/cafein-co-trong-tra-va-ca-phe-khac-nhau-nhu-the-nao/inline-05.jpg)
-*Một góc bếp gọn gàng thường giúp mình uống chậm hơn và chọn đồ uống hợp nhịp ngày hơn.*
+_Một góc bếp gọn gàng thường giúp mình uống chậm hơn và chọn đồ uống hợp nhịp ngày hơn._
 
 ### Chọn cách uống thông minh để tránh quá tay với caffeine
 
@@ -169,7 +169,7 @@ Một vài lưu ý thực tế:
 BBC Food có nhắc rằng caffeine có thể còn ảnh hưởng đến giấc ngủ nhiều giờ sau khi uống, nên nếu bạn đang cố ngủ ngon hơn, đừng chỉ nhìn vào buổi tối mà quên ly cà phê lúc 3 giờ chiều. Và nếu đang mang thai hoặc có vấn đề tim mạch, lo âu, rối loạn giấc ngủ, chuyện caffeine nên được cân nhắc kỹ hơn theo tư vấn y tế.
 
 ![A map of the coffee belt hanging on a wall](/images/posts/cafein-co-trong-tra-va-ca-phe-khac-nhau-nhu-the-nao/inline-06.jpg)
-*Phía sau một ly trà hay cà phê là cả câu chuyện về nguyên liệu, vùng trồng và cách chế biến.*
+_Phía sau một ly trà hay cà phê là cả câu chuyện về nguyên liệu, vùng trồng và cách chế biến._
 
 Tôi thích nhìn trà và cà phê như hai kiểu “đánh thức” khác nhau. Trà giống một cái chạm vai nhẹ nhàng. Cà phê giống tiếng gọi rõ ràng hơn. Cùng là caffeine, nhưng cách cơ thể nhận nó, giữ nó và phản ứng với nó lại phụ thuộc vào rất nhiều thứ: từ lá hay hạt, từ cách pha đến chính nhịp sống của mình.
 

@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -21,6 +23,29 @@ def _setup_stdout() -> None:
 
 def _echo(msg: str) -> None:
     click.echo(msg)
+
+
+def _repo_root() -> Path:
+    return Path(__file__).parent.parent.parent.parent
+
+
+def _format_with_prettier(path: Path) -> bool:
+    """Format a generated post with Prettier when Node tooling is available."""
+    prettier = shutil.which("npx")
+    if not prettier:
+        return False
+
+    try:
+        subprocess.run(
+            [prettier, "prettier", "--write", str(path)],
+            cwd=_repo_root(),
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+    except (OSError, subprocess.CalledProcessError):
+        return False
 
 
 @click.group()
@@ -107,6 +132,7 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
     output_path = output_dir / filename
 
     output_path.write_text(draft, encoding="utf-8")
+    formatted = _format_with_prettier(output_path)
 
     score = final_state.get("review_score", 0.0)
     revisions = final_state.get("revision_count", 0)
@@ -122,6 +148,8 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
     _echo(f"  Revisions: {revisions}")
     _echo(f"  Size     : {len(draft):,} chars")
     _echo(f"  Images   : localized {localization['rewritten']} references, downloaded {localization['downloaded']} files")
+    if formatted:
+        _echo("  Format   : Prettier applied")
     _echo("\nMo Astro dev server va truy cap /blog de xem bai viet moi.")
 
 
@@ -153,10 +181,12 @@ def localize_images(posts_dir: str, post: str | None, overwrite: bool) -> None:
             continue
 
         post_path.write_text(updated, encoding="utf-8")
+        formatted = _format_with_prettier(post_path)
         updated_files += 1
         rewritten_total += summary["rewritten"]
         downloaded_total += summary["downloaded"]
-        _echo(f"[localized] {post_path.name}: {summary['rewritten']} refs, {summary['downloaded']} files")
+        suffix = " + formatted" if formatted else ""
+        _echo(f"[localized] {post_path.name}: {summary['rewritten']} refs, {summary['downloaded']} files{suffix}")
 
     _echo("")
     _echo(f"[DONE] Updated {updated_files} post(s)")

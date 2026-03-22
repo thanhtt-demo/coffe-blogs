@@ -29,6 +29,8 @@ export interface Post {
   tags?: Taxonomy[];
   /**  */
   author?: string;
+  /** Optional list of cited references shown at the end of the post. */
+  references?: Reference[];
 
   /**  */
   metadata?: MetaData;
@@ -47,6 +49,12 @@ export interface Post {
 export interface Taxonomy {
   slug: string;
   title: string;
+}
+
+export interface Reference {
+  title: string;
+  url: string;
+  source?: string;
 }
 
 export interface MetaData {

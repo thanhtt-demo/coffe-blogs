@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import datetime, timezone
 
@@ -145,6 +144,7 @@ def draft_node(state: ResearchState) -> dict:
     )
 
     sources_block = _format_sources(docs)
+    references_yaml = _format_references_yaml(docs)
 
     # Frontmatter hints
     tags_yaml = "\n".join(f"  - {t}" for t in (outline_tags or ["cà-phê", "specialty"]))
@@ -179,6 +179,7 @@ category: {category}
 tags:
 {tags_yaml}
 author: 'Ba Tê'
+{references_yaml}
 ---
 
 Tiếp theo là nội dung bài viết. Chèn ảnh ĐÚNG theo vị trí được chỉ định trong dàn ý, \
@@ -202,7 +203,7 @@ dùng cú pháp:
         max_tokens=50000,
         temperature=0.7,
     )
-    in_tok  = usage.get("inputTokens",  "?")
+    in_tok = usage.get("inputTokens", "?")
     out_tok = usage.get("outputTokens", "?")
     print(
         f"[Draft] Done | input={in_tok} tok, output={out_tok} tok | "
@@ -223,6 +224,46 @@ def _format_sources(docs: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
+def _format_references_yaml(docs: list[dict]) -> str:
+    references: list[dict] = []
+    seen_urls: set[str] = set()
+
+    for doc in docs:
+        source_type = doc.get("source_type") or doc.get("source")
+        url = doc.get("url")
+        title = doc.get("title")
+
+        if not url or not title or source_type == "youtube" or url in seen_urls:
+            continue
+
+        references.append(
+            {
+                "title": title.replace("'", "''"),
+                "url": url,
+                "source": str(source_type),
+            }
+        )
+        seen_urls.add(url)
+
+        if len(references) >= 6:
+            break
+
+    if not references:
+        return "references: []"
+
+    lines = ["references:"]
+    for reference in references:
+        lines.extend(
+            [
+                f"  - title: '{reference['title']}'",
+                f"    url: '{reference['url']}'",
+                f"    source: '{reference['source']}'",
+            ]
+        )
+
+    return "\n".join(lines)
+
+
 def _mock_draft(state: ResearchState) -> str:
     today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT00:00:00Z")
     category = state["category"]
@@ -236,7 +277,7 @@ def _mock_draft(state: ResearchState) -> str:
         "excerpt: 'Bài viết dry-run để test pipeline'\n"
         f"image: '{image_url}'\n"
         f"category: {category}\n"
-        "tags:\n  - dry-run\nauthor: 'Ba Tê'\n"
+        "tags:\n  - dry-run\nauthor: 'Ba Tê'\nreferences: []\n"
         "---\n\n"
         f"# [DRY RUN] {topic}\n\n"
         "Đây là bản draft mock, không gọi Bedrock.\n\n"

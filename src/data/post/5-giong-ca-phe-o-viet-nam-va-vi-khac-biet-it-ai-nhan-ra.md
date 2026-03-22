@@ -11,6 +11,16 @@ tags:
   - arabica
   - robusta
 author: 'Ba Tê'
+references:
+  - title: 'Coffee Roast Intelligence'
+    url: 'http://arxiv.org/abs/2206.01841v1'
+    source: 'arXiv'
+  - title: 'An Electrochemical Appraisal of Coffee Qualities'
+    url: 'http://arxiv.org/abs/2501.14950v2'
+    source: 'arXiv'
+  - title: 'Main Coffee Varieties in Vietnam - Helena Coffee Vietnam'
+    url: 'https://www.helenacoffee.vn/main-coffee-varieties-in-vietnam/'
+    source: 'Web'
 ---
 
 ## Mở đầu: Vì sao cùng là cà phê Việt nhưng vị lại khác xa nhau?

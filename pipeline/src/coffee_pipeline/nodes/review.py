@@ -31,7 +31,7 @@ def review_node(state: ResearchState) -> dict:
     topic = state["topic"]
 
     user_message = f"""\
-Review bài viết blog về "{topic}" theo 3 tiêu chí sau:
+Review bài viết blog về "{topic}" theo 4 tiêu chí sau:
 
 1. **Factual Accuracy** (0-10): Kiến thức cà phê có đúng không? \
 Có lỗi khoa học nào (nhiệt độ, phản ứng hóa học, tên giống cà phê)? Nếu title có số đếm \
@@ -40,10 +40,15 @@ thì kiểm tra số đó có đúng với nội dung và taxonomy được bài
 (sáo rỗng, quá template, không có personality)? Có giống Data Engineer đam mê \
 cà phê đang chia sẻ thực sự? Trừ điểm nếu dùng heading kiểu mẫu như "Mở đầu", \
 "Kết luận", "Tổng quan" một cách máy móc.
-3. **Formatting** (0-10): YAML frontmatter có đúng chuẩn Astro (publishDate, title, \
+3. **Concision & Density** (0-10): Bài có cô đọng không? Trừ điểm mạnh nếu: \
+có đoạn lặp lại ý đã nói ở section khác; có câu đệm không thêm dữ kiện mới; \
+anecdote cá nhân quá dài (> 3–4 câu); section nào có thể rút ngắn một nửa mà \
+không mất ý chính. Target: 900–1600 từ. Bài > 1800 từ mà không phải deep-dive \
+thì tối đa 7 điểm cho tiêu chí này.
+4. **Formatting** (0-10): YAML frontmatter có đúng chuẩn Astro (publishDate, title, \
 excerpt, image, category, tags, author, references)? Markdown structure hợp lý?
 
-Score tổng = trung bình 3 tiêu chí. Passed nếu score >= {_PASS_THRESHOLD}.
+Score tổng = trung bình 4 tiêu chí. Passed nếu score >= {_PASS_THRESHOLD}.
 
 Trả về JSON sau (CHỈ JSON, không có text khác):
 {{
@@ -51,6 +56,7 @@ Trả về JSON sau (CHỈ JSON, không có text khác):
   "passed": <true hoặc false>,
   "factual_score": <float>,
   "tone_score": <float>,
+  "concision_score": <float>,
   "formatting_score": <float>,
   "feedback": "<danh sách điểm cần sửa cụ thể, hoặc 'Approved' nếu passed>"
 }}
@@ -99,6 +105,7 @@ BÀI VIẾT CẦN REVIEW:
         f"[Review] Round {new_revision_count}: {status} -- "
         f"Factual={result.get('factual_score', '?')}, "
         f"Tone={result.get('tone_score', '?')}, "
+        f"Concision={result.get('concision_score', '?')}, "
         f"Formatting={result.get('formatting_score', '?')}"
     )
     if not passed:

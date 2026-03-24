@@ -37,10 +37,16 @@ specialty trên blog cá nhân.
 
 ## Yêu cầu nội dung
 
-**Độ dài:** 1500–4500 từ tiếng Việt (tùy vào độ khó mà có thể linh hoạt, nhưng ưu tiên sâu hơn thay vì dài thêm).
+**Độ dài:** 900–1600 từ tiếng Việt. Chủ đề đơn giản thì 900–1200 là đủ. \
+Ưu tiên mật độ thông tin: mỗi câu phải thêm dữ kiện hoặc góc nhìn mới. \
+Cắt mọi câu mang tính đệm, lặp ý, hoặc diễn giải lại điều đã nói.
 
-**Mở bài:** Bắt đầu bằng anecdote hoặc câu hỏi kích thích tò mò — KHÔNG bắt \
-đầu bằng "Cà phê là..."
+**Cấu trúc:** 3–5 section chính (##). Mỗi section trả lời đúng 1 câu hỏi \
+và KHÔNG lặp luận điểm của section khác. Mỗi section 2–4 đoạn ngắn, \
+mỗi đoạn 2–4 câu.
+
+**Mở bài:** 1 anecdote ngắn hoặc câu hỏi kích thích tò mò (tối đa 3–4 câu) — KHÔNG bắt \
+đầu bằng "Cà phê là...". Phần thân bài ưu tiên facts và so sánh, hạn chế thêm anecdote.
 
 **Heading:** Không dùng các heading kiểu mẫu như `## Mở đầu:`, `## Kết luận:`, \
 `## Tổng quan:`. Heading phải tự nhiên, đi thẳng vào nội dung, đọc lên giống \
@@ -50,32 +56,28 @@ người viết thật chứ không giống dàn bài học sinh.
 nếu trong bài thực sự có đúng từng ấy ý hoặc từng ấy nhóm được bảo vệ rõ bằng \
 nguồn. Nếu không chắc, hãy dùng tiêu đề không có số.
 
-**Định dạng phong phú — bắt buộc dùng đủ các yếu tố sau:**
+**Định dạng — chỉ dùng khi thật sự giúp bài rõ hơn, KHÔNG cố nhồi đủ loại:**
 
-1. **Hình ảnh minh hậa xen kẽ** — chèn ảnh vào giữa bài theo cú pháp:
+1. **Hình ảnh** — tối đa 2–4 ảnh. Chèn theo cú pháp:
    ```
    ![Mô tả hình ảnh](URL_ẢNH)
-   *Chú thích ngắn, bổ sung ngữ cảnh*
+   *Chú thích ngắn*
    ```
-   Dùng ĐÚNG URL được cung cấp trong phần "Hình ảnh có sẵn". TUYỆT ĐỐI KHÔNG tự đặt URL khác.
+   Dùng ĐÚNG URL được cung cấp. TUYỆT ĐỐI KHÔNG tự đặt URL khác.
 
-2. **Bullet points có tổ chức** — dùng cho danh sách đặc điểm, so sánh, \
-   quy trình. Mỗi bullet nên có 1–2 câu, không phải chỉ một từ.
+2. **Bullet points** — chỉ khi có danh sách thực sự (đặc điểm, so sánh). \
+   Không bullet chỉ để trang trí.
 
-3. **In đậm** `**...**` — dùng để nhấn mạnh số liệu quan trọng, tên kỹ thuật, \
-   thuật ngữ cà phê lần đầu xuất hiện.
+3. **In đậm / in nghiêng** — tiết chế; chỉ bold số liệu quan trọng, \
+   chỉ italic tên khoa học hoặc thuật ngữ nước ngoài.
 
-4. **In nghiêng** `*...*` — dùng cho tên khoa học (*Coffea arabica*), tên nước \
-   ngoài, và những cảm nhận chủ quan ("*hương thơm như caramel và hoa nhài*").
+4. **Trích dẫn** `> ...` — tối đa 1–2 quote trong toàn bài, cho số liệu \
+   hoặc nhận định nổi bật nhất.
 
-5. **Trích dẫn** `> ...` — dùng cho câu nói của chuyên gia, số liệu từ nghiên \
-   cứu, hoặc câu tóm tắt ý quan trọng nhất của đoạn. Ví dụ:
-   > "Arabica chiếm 60% sản lượng cà phê toàn cầu và được trồng ở độ cao \
-   > 600–2.000m so với mực nước biển." — ICO, 2023
+5. **Bảng Markdown** — chỉ khi so sánh ≥ 3 mục có số liệu cụ thể, \
+   không dùng bảng cho nội dung dạng text thuần.
 
-6. **Bảng Markdown** — khi cần so sánh số liệu hoặc đặc điểm giữa 2+ đối tượng.
-
-7. **Heading structure:** `##` cho section chính, `###` cho sub-section.
+6. **Heading structure:** `##` cho section chính, `###` chỉ khi section dài hơn 4 đoạn.
 
 **Kết bài:** Open-ended, đặt câu hỏi cho độc giả, khuyến khích bình luận. \
 Không đặt heading kết bài là "Kết luận" nếu có thể viết một heading tự nhiên hơn.

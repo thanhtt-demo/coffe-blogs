@@ -1,54 +1,48 @@
 ---
 /**
- * Giscus comment widget — loads lazily when scrolled into view.
- * Configure repo/category IDs in src/config.yaml under `comments.giscus`.
+ * Cusdis comment widget — anonymous comments, no login required.
+ * Configure appId and host in src/config.yaml under `ui.cusdis`.
  */
 import { UI } from 'astrowind:config';
 
 export interface Props {
-  /** Giscus config overrides (optional — defaults come from config.yaml `ui.giscus`). */
-  repo?: string;
-  repoId?: string;
-  category?: string;
-  categoryId?: string;
+  /** Override the page ID used for this comment thread. */
+  pageId?: string;
+  /** Override the page title shown in the Cusdis dashboard. */
+  pageTitle?: string;
 }
 
-const giscus = (UI as Record<string, unknown>).giscus as
-  | { repo?: string; repoId?: string; category?: string; categoryId?: string }
-  | undefined;
+const cusdis = (UI as Record<string, unknown>).cusdis as { appId?: string; host?: string } | undefined;
 
-const {
-  repo = giscus?.repo ?? '',
-  repoId = giscus?.repoId ?? '',
-  category = giscus?.category ?? '',
-  categoryId = giscus?.categoryId ?? '',
-} = Astro.props;
+const appId = cusdis?.appId ?? '';
+const host = cusdis?.host ?? 'https://cusdis.com';
 
-const enabled = !!(repo && repoId && categoryId);
+const enabled = !!appId;
+const pageUrl = Astro.url.pathname;
+const { pageId = pageUrl, pageTitle = '' } = Astro.props;
 ---
 
 {
   enabled && (
     <section id="comments" class="mx-auto max-w-3xl px-6 mt-12 mb-8">
-      <div class="giscus" />
-      <script
-        is:inline
-        src="https://giscus.app/client.js"
-        data-repo={repo}
-        data-repo-id={repoId}
-        data-category={category}
-        data-category-id={categoryId}
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="top"
+      <h2 class="text-2xl font-bold mb-6 dark:text-slate-300">Bình luận</h2>
+      <div
+        id="cusdis_thread"
+        data-host={host}
+        data-app-id={appId}
+        data-page-id={pageId}
+        data-page-url={pageUrl}
+        data-page-title={pageTitle}
         data-theme="light"
-        data-lang="vi"
-        data-loading="lazy"
-        crossorigin="anonymous"
-        async
       />
+      <script is:inline src={`${host}/js/cusdis.es.js`} async defer />
     </section>
   )
 }
+
+<style>
+  :global(#cusdis_thread iframe) {
+    width: 100% !important;
+    min-height: 350px;
+  }
+</style>

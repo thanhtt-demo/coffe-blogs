@@ -71,9 +71,7 @@ analytics:
 ui:
   theme: 'light:only'
 
-  # Giscus comments — lấy repoId và categoryId từ https://giscus.app
-  giscus:
-    repo: 'thanhtt-demo/coffe-blogs' # ← đổi thành GitHub repo của bạn
-    repoId: 'R_kgDORtfjPg' # ← paste từ giscus.app
-    category: 'Blog Comments'
-    categoryId: 'DIC_kwDORtfjPs4C5LH_' # ← paste từ giscus.app
+  # Cusdis comments — đăng ký tại https://cusdis.com, tạo site, lấy appId
+  cusdis:
+    appId: '9badc066-6502-4f68-9fb2-74e1fa641711' # ← paste App ID từ Cusdis dashboard
+    host: 'https://cusdis.com' # hosted miễn phí, hoặc self-host URL

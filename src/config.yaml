@@ -70,3 +70,10 @@ analytics:
 
 ui:
   theme: 'light:only'
+
+  # Giscus comments — lấy repoId và categoryId từ https://giscus.app
+  giscus:
+    repo: 'thanhtt-demo/coffe-blogs' # ← đổi thành GitHub repo của bạn
+    repoId: 'R_kgDORtfjPg' # ← paste từ giscus.app
+    category: 'Blog Comments'
+    categoryId: 'DIC_kwDORtfjPs4C5LH_' # ← paste từ giscus.app

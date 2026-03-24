@@ -1,0 +1,54 @@
+---
+/**
+ * Giscus comment widget — loads lazily when scrolled into view.
+ * Configure repo/category IDs in src/config.yaml under `comments.giscus`.
+ */
+import { UI } from 'astrowind:config';
+
+export interface Props {
+  /** Giscus config overrides (optional — defaults come from config.yaml `ui.giscus`). */
+  repo?: string;
+  repoId?: string;
+  category?: string;
+  categoryId?: string;
+}
+
+const giscus = (UI as Record<string, unknown>).giscus as
+  | { repo?: string; repoId?: string; category?: string; categoryId?: string }
+  | undefined;
+
+const {
+  repo = giscus?.repo ?? '',
+  repoId = giscus?.repoId ?? '',
+  category = giscus?.category ?? '',
+  categoryId = giscus?.categoryId ?? '',
+} = Astro.props;
+
+const enabled = !!(repo && repoId && categoryId);
+---
+
+{
+  enabled && (
+    <section id="comments" class="mx-auto max-w-3xl px-6 mt-12 mb-8">
+      <div class="giscus" />
+      <script
+        is:inline
+        src="https://giscus.app/client.js"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="top"
+        data-theme="light"
+        data-lang="vi"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async
+      />
+    </section>
+  )
+}

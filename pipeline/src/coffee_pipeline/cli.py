@@ -58,12 +58,6 @@ def main() -> None:
 @main.command()
 @click.option("--topic", required=True, help="Chu de bai viet (tieng Viet hoac Anh)")
 @click.option(
-    "--category",
-    required=True,
-    type=click.Choice(["nguon-goc", "rang-xay", "pha-che", "nghien-cuu"]),
-    help="Category slug",
-)
-@click.option(
     "--output",
     default=str(Path(__file__).parent.parent.parent.parent / "src" / "data" / "post"),
     show_default=True,
@@ -74,7 +68,7 @@ def main() -> None:
     is_flag=True,
     help="Skip Bedrock calls, dung mock LLM response (test pipeline local)",
 )
-def research(topic: str, category: str, output: str, dry_run: bool) -> None:
+def research(topic: str, output: str, dry_run: bool) -> None:
     """Nghien cuu chu de va tao bai blog moi."""
     if dry_run:
         os.environ["PIPELINE_DRY_RUN"] = "1"
@@ -84,7 +78,6 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     _echo(f"Topic    : {topic}")
-    _echo(f"Category : {category}")
     _echo(f"Output   : {output_dir.resolve()}")
     _echo("")
 
@@ -95,7 +88,7 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
 
     initial_state = {
         "topic": topic,
-        "category": category,
+        "category": "",
         "search_results": [],
         "extracted_docs": [],
         "draft_post": "",
@@ -144,10 +137,14 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
     _echo("")
     _echo("[DONE] Hoan thanh!")
     _echo(f"  File     : {output_path}")
-    _echo(f"  Score    : {score:.1f}/10 ({'passed' if passed else 'max revisions reached'})")
+    _echo(
+        f"  Score    : {score:.1f}/10 ({'passed' if passed else 'max revisions reached'})"
+    )
     _echo(f"  Revisions: {revisions}")
     _echo(f"  Size     : {len(draft):,} chars")
-    _echo(f"  Images   : localized {localization['rewritten']} references, downloaded {localization['downloaded']} files")
+    _echo(
+        f"  Images   : localized {localization['rewritten']} references, downloaded {localization['downloaded']} files"
+    )
     if formatted:
         _echo("  Format   : Prettier applied")
     _echo("\nMo Astro dev server va truy cap /blog de xem bai viet moi.")
@@ -161,10 +158,17 @@ def research(topic: str, category: str, output: str, dry_run: bool) -> None:
     help="Thu muc chua bai post can migrate",
 )
 @click.option("--post", help="Path den file post cu the can localize")
-@click.option("--overwrite", is_flag=True, help="Ghi de image local neu file da ton tai")
+@click.option(
+    "--overwrite", is_flag=True, help="Ghi de image local neu file da ton tai"
+)
 def localize_images(posts_dir: str, post: str | None, overwrite: bool) -> None:
     """Download remote images ve public/images/posts va rewrite markdown sang local path."""
-    targets = [Path(post)] if post else sorted(Path(posts_dir).glob("*.md")) + sorted(Path(posts_dir).glob("*.mdx"))
+    targets = (
+        [Path(post)]
+        if post
+        else sorted(Path(posts_dir).glob("*.md"))
+        + sorted(Path(posts_dir).glob("*.mdx"))
+    )
 
     if not targets:
         _echo("Khong tim thay bai viet nao de migrate.")
@@ -176,7 +180,9 @@ def localize_images(posts_dir: str, post: str | None, overwrite: bool) -> None:
 
     for post_path in targets:
         original = post_path.read_text(encoding="utf-8")
-        updated, summary = localize_markdown_images(original, post_path.stem, overwrite=overwrite)
+        updated, summary = localize_markdown_images(
+            original, post_path.stem, overwrite=overwrite
+        )
         if updated == original:
             continue
 
@@ -186,7 +192,9 @@ def localize_images(posts_dir: str, post: str | None, overwrite: bool) -> None:
         rewritten_total += summary["rewritten"]
         downloaded_total += summary["downloaded"]
         suffix = " + formatted" if formatted else ""
-        _echo(f"[localized] {post_path.name}: {summary['rewritten']} refs, {summary['downloaded']} files{suffix}")
+        _echo(
+            f"[localized] {post_path.name}: {summary['rewritten']} refs, {summary['downloaded']} files{suffix}"
+        )
 
     _echo("")
     _echo(f"[DONE] Updated {updated_files} post(s)")
@@ -197,7 +205,11 @@ def localize_images(posts_dir: str, post: str | None, overwrite: bool) -> None:
 def _save_pipeline_cache(topic: str, final_state: dict) -> None:
     """Luu outline, images, draft ra pipeline/cache/<slug>/ sau khi pipeline xong."""
     try:
-        cache_dir = Path(__file__).parent.parent.parent.parent / "cache" / slugify(topic, max_length=60)
+        cache_dir = (
+            Path(__file__).parent.parent.parent.parent
+            / "cache"
+            / slugify(topic, max_length=60)
+        )
         cache_dir.mkdir(parents=True, exist_ok=True)
 
         outline = final_state.get("article_outline")
@@ -223,9 +235,9 @@ def _strip_code_fence(text: str) -> str:
     """Strip ```yaml / ``` code fence wrapper that some models add around the output."""
     text = text.strip()
     # Remove leading ```yaml or ``` or ```markdown
-    text = re.sub(r'^```[a-z]*\n?', '', text)
+    text = re.sub(r"^```[a-z]*\n?", "", text)
     # Remove trailing ```
-    text = re.sub(r'\n?```\s*$', '', text)
+    text = re.sub(r"\n?```\s*$", "", text)
     return text.strip()
 
 

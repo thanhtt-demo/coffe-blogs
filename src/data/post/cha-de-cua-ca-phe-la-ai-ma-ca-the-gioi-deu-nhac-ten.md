@@ -75,4 +75,4 @@ Nhưng sẽ không công bằng nếu gói toàn bộ công lao vào một dân 
 Nếu buộc phải chọn một “cha đẻ” theo nghĩa văn hóa, tôi sẽ chọn **cả một nền văn minh cà phê** chứ không phải một cá nhân. Còn nếu chọn theo nghĩa biểu tượng, Kaldi là nhân vật kể chuyện dễ nhớ nhất. Còn nếu chọn theo nghĩa khoa học, Ethiopia mới là nơi cây cà phê bắt đầu hành trình của mình.
 
 ![Coffee brewing equipment on a wooden counter](/images/posts/cha-de-cua-ca-phe-la-ai-ma-ca-the-gioi-deu-nhac-ten/inline-04.jpg)
-_Dụng cụ pha chế hiện đại là kết quả của hàng thế kỷ tích lũy thói quen uống cà phê.
+\_Dụng cụ pha chế hiện đại là kết quả của hàng thế kỷ tích lũy thói quen uống cà phê.

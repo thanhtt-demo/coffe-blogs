@@ -10,7 +10,5 @@ class ResearchState(TypedDict):
     article_outline: NotRequired[dict]       # Dàn ý do outline_node tạo
     article_images: NotRequired[list[dict]]  # Ảnh thực tế từ Unsplash (image_fetch_node)
     draft_post: str               # Bản nháp từ draft_node
-    review_feedback: str          # Feedback từ review_node
-    review_score: float           # Điểm 0-10 từ review_node
-    review_passed: bool           # True nếu score >= 8.0
-    revision_count: int           # Số vòng lặp đã thực hiện (tăng trong review_node)
+    draft_post_original: NotRequired[str]  # Bản nháp gốc (trước rewrite), title có "[DRAFT] "
+    review_feedback: NotRequired[str]      # JSON string từ review_node

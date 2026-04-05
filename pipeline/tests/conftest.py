@@ -10,7 +10,4 @@ def sample_state():
         "extracted_docs": [],
         "draft_post": "",
         "review_feedback": "",
-        "review_score": 0.0,
-        "review_passed": False,
-        "revision_count": 0,
     }

@@ -92,10 +92,6 @@ def research(topic: str, output: str, dry_run: bool) -> None:
         "search_results": [],
         "extracted_docs": [],
         "draft_post": "",
-        "review_feedback": "",
-        "review_score": 0.0,
-        "review_passed": False,
-        "revision_count": 0,
     }
 
     _echo(">> Bat dau pipeline...\n")
@@ -127,9 +123,22 @@ def research(topic: str, output: str, dry_run: bool) -> None:
     output_path.write_text(draft, encoding="utf-8")
     formatted = _format_with_prettier(output_path)
 
-    score = final_state.get("review_score", 0.0)
-    revisions = final_state.get("revision_count", 0)
-    passed = final_state.get("review_passed", False)
+    # Export bản nháp gốc nếu tồn tại
+    draft_original = final_state.get("draft_post_original", "")
+    draft_original_path = None
+    if draft_original:
+        draft_original = _strip_code_fence(draft_original)
+        draft_original_filename = f"{Path(filename).stem}-draft.md"
+        try:
+            draft_original, orig_localization = localize_markdown_images(
+                draft_original, Path(draft_original_filename).stem
+            )
+        except Exception as e:
+            click.secho(f"[WARN] Khong the localize image cho draft original: {e}", fg="yellow", err=True)
+            orig_localization = {"rewritten": 0, "downloaded": 0}
+        draft_original_path = output_dir / draft_original_filename
+        draft_original_path.write_text(draft_original, encoding="utf-8")
+        _format_with_prettier(draft_original_path)
 
     # Save outline + images to cache dir (sources/docs already saved by extract_node)
     _save_pipeline_cache(topic, final_state)
@@ -137,10 +146,8 @@ def research(topic: str, output: str, dry_run: bool) -> None:
     _echo("")
     _echo("[DONE] Hoan thanh!")
     _echo(f"  File     : {output_path}")
-    _echo(
-        f"  Score    : {score:.1f}/10 ({'passed' if passed else 'max revisions reached'})"
-    )
-    _echo(f"  Revisions: {revisions}")
+    if draft_original_path:
+        _echo(f"  Draft    : {draft_original_path}")
     _echo(f"  Size     : {len(draft):,} chars")
     _echo(
         f"  Images   : localized {localization['rewritten']} references, downloaded {localization['downloaded']} files"
@@ -225,6 +232,10 @@ def _save_pipeline_cache(topic: str, final_state: dict) -> None:
         draft = final_state.get("draft_post", "")
         if draft:
             (cache_dir / "draft.md").write_text(draft, encoding="utf-8")
+
+        draft_original = final_state.get("draft_post_original", "")
+        if draft_original:
+            (cache_dir / "draft-original.md").write_text(draft_original, encoding="utf-8")
 
         print(f"[Cache] Pipeline artifacts saved -> {cache_dir}")
     except Exception as e:

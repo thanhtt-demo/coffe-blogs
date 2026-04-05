@@ -1,4 +1,6 @@
+import json
 import os
+import re
 from datetime import datetime, timezone
 
 from ..llm import call_llm, get_model_label
@@ -94,6 +96,117 @@ KHÔNG bọc trong code block.
 """
 
 
+_REF_FILTER_SYSTEM_PROMPT = """\
+You are a reference relevance classifier. Given a blog article draft and a list of \
+source documents (title + URL), return ONLY a JSON array of indices (0-based) of \
+documents that are ACTUALLY RELEVANT to the article content. A document is relevant \
+if its subject matter directly supports or is cited in the article. Documents about \
+unrelated subjects should be excluded. Return ONLY valid JSON, e.g. [0, 2, 5].\
+"""
+
+
+def _filter_references_llm(draft_text: str, docs: list[dict], topic: str) -> list[dict]:
+    """Dùng LLM đánh giá relevance của extracted docs đối với nội dung draft, loại bỏ docs không liên quan.
+
+    Args:
+        draft_text: nội dung bài draft từ LLM
+        docs: danh sách extracted_docs
+        topic: chủ đề bài viết
+
+    Returns:
+        Danh sách docs đã lọc (chỉ giữ docs liên quan, không giới hạn số lượng)
+    """
+    if not docs or not draft_text:
+        return []
+
+    if os.getenv("PIPELINE_DRY_RUN"):
+        return list(docs)
+
+    # Build user prompt
+    docs_lines = []
+    for i, doc in enumerate(docs):
+        title = doc.get("title", "")
+        url = doc.get("url", "")
+        docs_lines.append(f"[{i}] Title: {title}\n    URL: {url}")
+
+    user_prompt = (
+        f"Topic: {topic}\n\n"
+        f"Article draft:\n{draft_text}\n\n"
+        f"Source documents:\n" + "\n\n".join(docs_lines)
+    )
+
+    try:
+        response_text, _usage = call_llm(
+            system=_REF_FILTER_SYSTEM_PROMPT,
+            user=user_prompt,
+            max_tokens=512,
+            temperature=0.0,
+        )
+    except Exception as e:
+        print(f"[Draft] LLM ref filter failed, keeping all refs: {e}")
+        return list(docs)
+
+    # Parse JSON array of relevant indices
+    try:
+        indices = json.loads(response_text.strip())
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"[Draft] LLM ref filter failed, keeping all refs: {e}")
+        return list(docs)
+
+    if not isinstance(indices, list):
+        print(f"[Draft] LLM ref filter failed, keeping all refs: unexpected response type")
+        return list(docs)
+
+    # Filter docs, skipping out-of-range indices
+    filtered = []
+    for idx in indices:
+        if isinstance(idx, int) and 0 <= idx < len(docs):
+            filtered.append(docs[idx])
+
+    kept = len(filtered)
+    total = len(docs)
+    print(f"[Draft] LLM ref filter: kept {kept}/{total} docs")
+
+    return filtered
+
+
+def _replace_references_in_draft(draft: str, docs: list[dict], topic: str) -> str:
+    """Filter references via LLM and replace the references block in the draft frontmatter.
+
+    If no references block is found in the draft, return the draft as-is.
+    """
+    # Match the YAML frontmatter (between --- delimiters)
+    fm_match = re.match(r"(---\s*\n)(.*?\n)(---)", draft, re.DOTALL)
+    if not fm_match:
+        return draft
+
+    fm_prefix = fm_match.group(1)   # opening ---\n
+    fm_body = fm_match.group(2)     # frontmatter content
+    fm_suffix = fm_match.group(3)   # closing ---
+    after_fm = draft[fm_match.end():]
+
+    # Find the references block inside frontmatter body
+    # Matches "references: []" or "references:\n  - title: ..." block
+    refs_pattern = re.compile(
+        r"^references:\s*\[\]\s*$|^references:\s*\n(?:  [ -].*\n?)*",
+        re.MULTILINE,
+    )
+    refs_match = refs_pattern.search(fm_body)
+    if not refs_match:
+        return draft
+
+    # Filter docs via LLM
+    filtered_docs = _filter_references_llm(draft, docs, topic)
+
+    # Build new references YAML
+    new_refs_yaml = _format_references_yaml(filtered_docs)
+
+    # Replace the old references block with the new one
+    new_fm_body = fm_body[:refs_match.start()] + new_refs_yaml + "\n" + fm_body[refs_match.end():]
+
+    return fm_prefix + new_fm_body + fm_suffix + after_fm
+
+
 def draft_node(state: ResearchState) -> dict:
     """Node 5: Tổng hợp tài liệu và viết bản nháp bài blog."""
     # Dry-run mode: skip LLM call
@@ -105,8 +218,6 @@ def draft_node(state: ResearchState) -> dict:
     docs = state["extracted_docs"]
     outline: dict = state.get("article_outline") or {}  # type: ignore[assignment]
     images_data: dict = state.get("article_images") or {}  # type: ignore[assignment]
-    feedback = state.get("review_feedback", "")
-    revision_count = state.get("revision_count", 0)
 
     # article_images schema: {"cover": {...}|None, "sections": [{...}|None, ...]}
     cover_img = images_data.get("cover") if isinstance(images_data, dict) else None
@@ -129,28 +240,25 @@ def draft_node(state: ResearchState) -> dict:
     outline_tags = outline.get("tags", [])
     outline_sections = outline.get("sections", [])
 
-    revision_note = ""
-    if feedback and revision_count > 0:
-        revision_note = (
-            f"\n\n**⚠️ Feedback từ review lần {revision_count} (bắt buộc sửa):**\n"
-            f"{feedback}\n"
-        )
-
-    # Build per-section plan: heading + summary + assigned image (if any)
+    # Build per-section plan: heading + summary + thesis + assigned image (if any)
     sections_lines = []
     for i, sec in enumerate(outline_sections):
         heading = sec.get("heading", "")
         summary = sec.get("summary", "")
+        thesis = sec.get("thesis", "")
         img = section_imgs[i] if i < len(section_imgs) else None
         if img:
-            sections_lines.append(
+            line = (
                 f"- {heading}: {summary}\n"
                 f"  → SAU section này: chèn ảnh ĐÚNG URL này: `{img['url']}`\n"
                 f"    Alt text: \"{img['alt']}\"\n"
                 f"    Caption: (viết 1 câu tiếng Việt mô tả ngắn)"
             )
         else:
-            sections_lines.append(f"- {heading}: {summary}")
+            line = f"- {heading}: {summary}"
+        if thesis:
+            line += f"\n  → THESIS (chỉ viết quanh luận điểm này): {thesis}"
+        sections_lines.append(line)
 
     sections_block = (
         "**Dàn ý + vị trí ảnh (theo thứ tự, KHÔNG thay đổi URL):**\n"
@@ -175,7 +283,7 @@ Viết bài blog hoàn chỉnh về: **{topic}**
 - Category: `{category}`
 - PublishDate: `{today}`
 - {cover_note}
-{revision_note}
+
 ---
 
 {sections_block}
@@ -208,6 +316,10 @@ dùng cú pháp:
 ![alt text](URL_ĐÚNG_NHƯ_TRÊN)
 *Chú thích tiếng Việt ngắn*
 
+**Quy tắc quan trọng:**
+- Mỗi section CHỈ được viết quanh thesis đã gán. Không lạc đề sang luận điểm của section khác.
+- Nếu một dữ kiện đã xuất hiện ở section trước, KHÔNG nhắc lại ở section sau.
+
 Nhắc lại lần cuối trước khi viết:
 - Viết cho độc giả phổ thông, không giả định họ biết thuật ngữ IT
 - Không dùng ví dụ hay ẩn dụ kiểu kỹ sư/phần mềm để giải thích ý
@@ -219,8 +331,7 @@ Nhắc lại lần cuối trước khi viết:
     est_tokens = req_chars // 4
     print(
         f"[Draft] Calling {get_model_label()} | "
-        f"~{est_tokens:,} input tokens ({req_chars:,} chars) | "
-        f"revision #{revision_count + 1}"
+        f"~{est_tokens:,} input tokens ({req_chars:,} chars)"
     )
 
     draft, usage = call_llm(
@@ -235,6 +346,10 @@ Nhắc lại lần cuối trước khi viết:
         f"[Draft] Done | input={in_tok} tok, output={out_tok} tok | "
         f"{len(draft):,} chars"
     )
+
+    # Post-draft: filter references via LLM and rebuild YAML block
+    draft = _replace_references_in_draft(draft, docs, topic)
+
     return {"draft_post": draft}
 
 

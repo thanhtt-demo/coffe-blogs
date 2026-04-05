@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 
+from ..llm import call_llm
 from ..state import ResearchState
 from ..tools.crawl4ai_tool import crawl_url_sync
 from ..tools.youtube_tool import get_youtube_video_id
@@ -21,6 +22,70 @@ def _cache_dir(topic: str) -> Path:
     return _CACHE_ROOT / slug
 
 
+_RELEVANCE_SYSTEM_PROMPT = (
+    "You are a research relevance classifier. Given a topic about coffee and a list of "
+    "academic papers (title + abstract), return ONLY a JSON array of indices (0-based) "
+    "of papers that are RELEVANT to the topic. A paper is relevant if it discusses "
+    "coffee, caffeine, brewing, roasting, coffee chemistry, coffee health effects, "
+    "or food science directly related to coffee. Papers about unrelated subjects "
+    "(physics, astronomy, robotics, etc.) that merely mention \"coffee\" in passing "
+    "are NOT relevant. Return ONLY valid JSON, e.g. [0, 2, 5]."
+)
+
+
+def _filter_irrelevant_academic(items: list[dict], topic: str) -> list[dict]:
+    """Dùng LLM đánh giá relevance của tài liệu academic, loại bỏ tài liệu không liên quan.
+
+    Args:
+        items: danh sách dict chứa 'title', 'abstract', 'source' (chỉ academic sources)
+        topic: chủ đề bài viết (tiếng Việt hoặc Anh)
+
+    Returns:
+        Danh sách items đã lọc, chỉ giữ tài liệu liên quan
+    """
+    if not items:
+        return []
+
+    if os.environ.get("PIPELINE_DRY_RUN"):
+        return items
+
+    # Build user prompt
+    paper_lines: list[str] = []
+    for i, item in enumerate(items):
+        title = item.get("title", "") or ""
+        abstract = (item.get("abstract", "") or "")[:200]
+        paper_lines.append(f"[{i}] Title: {title}\n    Abstract: {abstract}")
+
+    user_prompt = f"Topic: {topic}\n\nPapers:\n" + "\n\n".join(paper_lines)
+
+    try:
+        response_text, _usage = call_llm(
+            system=_RELEVANCE_SYSTEM_PROMPT,
+            user=user_prompt,
+            max_tokens=512,
+            temperature=0.0,
+        )
+        # Parse JSON array of indices
+        relevant_indices = json.loads(response_text.strip())
+        if not isinstance(relevant_indices, list):
+            raise ValueError(f"Expected list, got {type(relevant_indices)}")
+    except Exception as e:
+        print(f"[Extract] LLM filter failed, keeping all academic docs: {e}")
+        return items
+
+    # Filter: keep only items whose index is in the relevant set, skip out-of-range
+    valid_indices = {idx for idx in relevant_indices if isinstance(idx, int) and 0 <= idx < len(items)}
+    kept = [items[i] for i in range(len(items)) if i in valid_indices]
+
+    # Log each removed doc
+    for i, item in enumerate(items):
+        if i not in valid_indices:
+            print(f"[Extract] LLM filtered out: {item.get('title', '')}")
+
+    print(f"[Extract] LLM relevance filter: kept {len(kept)}/{len(items)} academic docs")
+    return kept
+
+
 def extract_node(state: ResearchState) -> dict:
     """Node 2: Extract nội dung từ danh sách nguồn tài liệu.
 
@@ -35,8 +100,16 @@ def extract_node(state: ResearchState) -> dict:
     docs: list[dict] = []
     total_chars = 0
 
+    # --- LLM relevance filter: tách academic items, lọc, rồi gộp lại ---
+    academic_sources = {"arxiv", "semantic_scholar", "openalex"}
+    academic_items = [item for item in search_results if item.get("source") in academic_sources]
+    non_academic_items = [item for item in search_results if item.get("source") not in academic_sources]
+
+    filtered_academic = _filter_irrelevant_academic(academic_items, topic)
+    filtered_results = non_academic_items + filtered_academic
+
     # --- crawl URLs ---
-    for item in search_results:
+    for item in filtered_results:
         if total_chars >= TOTAL_BUDGET:
             print(f"[Extract] Total budget {TOTAL_BUDGET} chars reached, skipping rest")
             break

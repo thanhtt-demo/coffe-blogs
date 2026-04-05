@@ -17,6 +17,7 @@ Output ONLY valid JSON (no markdown, no explanation, no code fence):
     {
       "heading": "## Tên section",
       "summary": "Nội dung chính sẽ viết, 2-3 câu",
+      "thesis": "Luận điểm chính duy nhất của section này, tối đa 1 câu",
       "image_query": "specific english visual query matching THIS section's content"
     }
   ],
@@ -45,6 +46,8 @@ Rules:
 - Use direct, content-specific headings instead, for example a question or a statement that can stand on its own.
 - tags: lowercase, hyphenated, 3–5 tags
 - All Vietnamese text must be natural, not translated-sounding
+- Mỗi section PHẢI có một `thesis` riêng biệt — luận điểm chính duy nhất mà section đó bảo vệ, viết trong tối đa 1 câu.
+- KHÔNG section nào được lặp lại luận điểm của section khác. Nếu hai section có thesis giống nhau, hãy gộp chúng lại.
 """
 
 

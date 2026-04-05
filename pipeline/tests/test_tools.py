@@ -110,39 +110,6 @@ def test_youtube_returns_empty_on_error():
     assert results == []
 
 
-# ─── Graph Routing ────────────────────────────────────────────────────────────
-
-
-def test_review_decision_passes_when_score_high():
-    from coffee_pipeline.graph import _review_decision
-
-    state = {
-        "review_passed": True,
-        "revision_count": 1,
-    }
-    assert _review_decision(state) == "end"
-
-
-def test_review_decision_stops_at_max_revisions():
-    from coffee_pipeline.graph import _review_decision
-
-    state = {
-        "review_passed": False,
-        "revision_count": 3,  # >= 3 → end
-    }
-    assert _review_decision(state) == "end"
-
-
-def test_review_decision_continues_when_failing():
-    from coffee_pipeline.graph import _review_decision
-
-    state = {
-        "review_passed": False,
-        "revision_count": 1,
-    }
-    assert _review_decision(state) == "draft"
-
-
 # ─── Filename derivation ──────────────────────────────────────────────────────
 
 

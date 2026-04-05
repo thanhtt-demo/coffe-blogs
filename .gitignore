@@ -33,3 +33,5 @@ pipeline/debug_bedrock.ipynb
 pnpm-lock.yaml
 
 .astro
+.kiro/
+.vscode/

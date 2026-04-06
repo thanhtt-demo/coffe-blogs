@@ -14,26 +14,38 @@ Rules:
 - Japanese: use Japanese coffee terms naturally (コーヒー, スペシャルティ, 焙煎, etc.)
 - Queries should be 3–7 words, diverse — cover different angles of the topic
 - Do NOT prefix queries with "coffee" unless the topic truly requires it
+- Classify the topic into exactly one category:
+  - nguon-goc: origin, history, varieties, terroir, farming, processing
+  - rang-xay: roasting, grinding, roast profiles, Maillard reaction
+  - pha-che: brewing, recipes, equipment, extraction, latte art
+  - nghien-cuu: health, science, chemistry, caffeine, research studies
 - Return ONLY valid JSON — no markdown, no explanation, no code fence
 
 Output format (exactly):
-{"en": ["query1", "query2", "query3"], "ja": ["クエリ1", "クエリ2", "クエリ3"]}
+{"en": ["query1", "query2", "query3"], "ja": ["クエリ1", "クエリ2", "クエリ3"], "category": "nguon-goc"}
 """
 
 
-def _parse_queries(raw: str) -> dict[str, list[str]]:
+_VALID_CATEGORIES = {"nguon-goc", "rang-xay", "pha-che", "nghien-cuu"}
+
+
+def _parse_queries(raw: str) -> dict:
     """Parse JSON từ LLM output, strip code fence nếu có."""
     text = raw.strip()
     text = re.sub(r"^```(?:json)?\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
     try:
         data = json.loads(text)
+        category = data.get("category", "")
+        if category not in _VALID_CATEGORIES:
+            category = "nghien-cuu"
         return {
             "en": [q for q in data.get("en", []) if isinstance(q, str)][:3],
             "ja": [q for q in data.get("ja", []) if isinstance(q, str)][:3],
+            "category": category,
         }
     except json.JSONDecodeError:
-        return {"en": [], "ja": []}
+        return {"en": [], "ja": [], "category": "nghien-cuu"}
 
 
 def query_gen_node(state: ResearchState) -> dict:
@@ -60,4 +72,7 @@ def query_gen_node(state: ResearchState) -> dict:
     print(f"[QueryGen] EN: {en_queries}")
     print(f"[QueryGen] JA: {ja_queries}")
 
-    return {"search_queries": en_queries + ja_queries}
+    category = parsed["category"]
+    print(f"[QueryGen] Category: {category}")
+
+    return {"search_queries": en_queries + ja_queries, "category": category}

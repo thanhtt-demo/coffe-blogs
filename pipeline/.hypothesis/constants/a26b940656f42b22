@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\nodes\image_fetch.py
+# hypothesis_version: 6.151.9
+
+['(photo-[a-z0-9\\-]+)', '*.md', 'article_images', 'article_outline', 'cover', 'cover_image_query', 'data', 'description', 'heading', 'ignore', 'image_fetch_node', 'image_query', 'post', 'sections', 'source_id', 'src', 'title', 'url', 'utf-8']

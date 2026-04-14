@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\utils.py
+# hypothesis_version: 6.151.9
+
+['--write', '\\n?```\\s*$', '^```[a-z]*\\n?', 'article_images', 'article_outline', 'cache', 'draft-original.md', 'draft.md', 'draft_post', 'draft_post_original', 'images.json', 'npx', 'outline.json', 'prettier', 'utf-8']

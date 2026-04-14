@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\nodes\outline.py
+# hypothesis_version: 6.151.9
+
+[0.4, 500, 2048, 200000, '\\s*```$', '^```(?:json)?\\s*', 'article_outline', 'cover_image_query', 'excerpt', 'extracted_docs', 'image_query', 'sections', 'tags', 'title', 'topic', '{']

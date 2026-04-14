@@ -12,3 +12,5 @@ class ResearchState(TypedDict):
     draft_post: str               # Bản nháp từ draft_node
     draft_post_original: NotRequired[str]  # Bản nháp gốc (trước rewrite), title có "[DRAFT] "
     review_feedback: NotRequired[str]      # JSON string từ review_node
+    user_materials: NotRequired[list[dict]]    # Materials từ user
+    research_sources: NotRequired[list[str]]   # Nguồn research được bật: arxiv, openalex, web, youtube

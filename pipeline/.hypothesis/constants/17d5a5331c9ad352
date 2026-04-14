@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\nodes\rewrite.py
+# hypothesis_version: 6.151.9
+
+[0.3, 16384, '?', 'PIPELINE_DRY_RUN', 'draft_post', 'draft_post_original', 'inputTokens', 'issues', 'outputTokens', 'review_feedback']

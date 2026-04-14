@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\routes_articles.py
+# hypothesis_version: 6.151.9
+
+[0.3, 8192, '/api/articles', '/{slug}', '/{slug}/publish', '/{slug}/rewrite', 'detail']

@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\routes_jobs.py
+# hypothesis_version: 6.151.9
+
+['/api/jobs', '/{job_id}', '/{job_id}/stream', 'Job not found', 'completed', 'data', 'failed']

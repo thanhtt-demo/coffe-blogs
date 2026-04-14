@@ -20,6 +20,11 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "openai>=1.0.0",
     "duckduckgo-search>=7.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sse-starlette>=2.0.0",
+    "pyyaml>=6.0",
+    "pymupdf>=1.24.0",
 ]
 
 [project.optional-dependencies]

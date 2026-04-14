@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\routes_materials.py
+# hypothesis_version: 6.151.9
+
+[404, '.jpeg', '.jpg', '.png', '.webp', '/api/materials', '/upload', '/{material_id}', '/{material_id}/file', 'Deleted', 'Material not found', 'content', 'detail', 'extracted', 'giới hạn', 'image', 'image/jpeg', 'image/png', 'image/webp', 'unknown', 'vượt quá']

@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\nodes\draft.py
+# hypothesis_version: 6.151.9
+
+[0.0, 0.7, 512, 50000, '\n\n---\n\n', '%Y-%m-%dT00:00:00Z', "'", "''", '(photo-[a-z0-9\\-]+)', '?', 'PIPELINE_DRY_RUN', 'article_images', 'article_outline', 'category', 'cover', 'cà-phê', 'description', 'draft_post', 'excerpt', 'extracted_docs', 'file_path', 'file_type', 'heading', 'image', 'inputTokens', 'name', 'nghien-cuu', 'nguon-goc', 'outputTokens', 'pha-che', 'rang-xay', 'references:', 'references: []', 'sections', 'source', 'source_id', 'source_type', 'specialty', 'summary', 'tags', 'thesis', 'title', 'topic', 'url', 'user_materials', 'youtube', 'Ảnh cá nhân']

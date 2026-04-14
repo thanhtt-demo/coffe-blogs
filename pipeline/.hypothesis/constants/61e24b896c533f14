@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\article_manager.py
+# hypothesis_version: 6.151.9
+
+['*.md', '---', '-draft', 'cache', 'data', 'images', 'json', 'pipeline', 'post', 'posts', 'public', 'src', 'utf-8']

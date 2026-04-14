@@ -188,7 +188,7 @@ def _replace_references_in_draft(draft: str, docs: list[dict], topic: str) -> st
     # Find the references block inside frontmatter body
     # Matches "references: []" or "references:\n  - title: ..." block
     refs_pattern = re.compile(
-        r"^references:\s*\[\]\s*$|^references:\s*\n(?:  [ -].*\n?)*",
+        r"^references:\s*\[\]\s*$|^references:\s*\n(?:  +[^ \n].*\n?)*",
         re.MULTILINE,
     )
     refs_match = refs_pattern.search(fm_body)

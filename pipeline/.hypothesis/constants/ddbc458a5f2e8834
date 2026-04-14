@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\models.py
+# hypothesis_version: 6.151.9
+
+[0.0, 500, 1024, '.jpeg', '.jpg', '.md', '.pdf', '.png', '.txt', '.webp', 'Ba Tê', 'completed', 'failed', 'image', 'pending', 'running', 'text']

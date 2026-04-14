@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\job_manager.py
+# hypothesis_version: 6.151.9
+
+[0.0, 1.0, 'article_id', 'callbacks', 'category', 'data', 'draft', 'draft_post', 'draft_post_original', 'error', 'extract', 'extracted_docs', 'id', 'image_fetch', 'name', 'outline', 'post', 'progress', 'query_gen', 'research', 'review', 'rewrite', 'search_results', 'src', 'status', 'step', 'topic', 'user_materials', 'utf-8']

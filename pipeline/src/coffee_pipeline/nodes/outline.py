@@ -79,10 +79,11 @@ def outline_node(state: ResearchState) -> dict:
     topic = state["topic"]
     docs = state.get("extracted_docs", [])
 
-    # Summarise docs lightly to keep prompt small
+    # Include all docs — use full content (truncated per doc to fit context)
+    max_per_doc = max(500, 200000 // max(len(docs), 1))
     docs_brief = "\n".join(
-        f"- [{d['source_type']}] {d['title']}: {d['content'][:300]}..."
-        for d in docs[:6]
+        f"- [{d['source_type']}] {d['title']}:\n{d['content'][:max_per_doc]}"
+        for d in docs
     )
 
     print(f"[Outline] Generating outline for: {topic!r} ({len(docs)} docs)")

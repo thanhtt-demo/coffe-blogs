@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\llm.py
+# hypothesis_version: 6.151.9
+
+[0.3, 1024, '/', '?', 'AWS_DEFAULT_REGION', 'BEDROCK_MODEL_ID', 'LLM_PROVIDER', 'OPENAI_MODEL_ID', 'bedrock', 'bedrock-runtime', 'bytes', 'content', 'format', 'gpt-4o', 'gpt-5.4-mini', 'image', 'image_url', 'inputTokens', 'input_image', 'input_text', 'maxTokens', 'max_tokens', 'message', 'messages', 'model', 'not supported', 'openai', 'output', 'outputTokens', 'role', 'source', 'system', 'temperature', 'text', 'type', 'url', 'us-east-1', 'usage', 'user', 'utf-8']

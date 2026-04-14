@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\local_images.py
+# hypothesis_version: 6.151.9
+
+[30.0, '(photo-[a-z0-9\\-]+)', '.gif', '.jpg', '.png', '.svg', '.webp', ';', 'content-type', 'cover', 'downloaded', 'extract_source_id', 'fm', 'format', 'frontmatter', 'gif', 'image', 'image/gif', 'image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp', 'imageSourceId', 'images', 'jpeg', 'jpg', 'line', 'png', 'posts', 'public', 'rewritten', 'svg', 'url', 'webp']

@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\api\app.py
+# hypothesis_version: 6.151.9
+
+['*', '/api/auth/verify', 'Ba Tê Pipeline API', 'Bearer', 'WEBAPP_API_KEY', 'valid']

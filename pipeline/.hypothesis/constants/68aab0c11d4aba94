@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\nodes\query_gen.py
+# hypothesis_version: 6.151.9
+
+[0.3, 256, '\\s*```$', '^```(?:json)?\\s*', 'category', 'en', 'ja', 'nghien-cuu', 'nguon-goc', 'pha-che', 'rang-xay', 'search_queries', 'topic']

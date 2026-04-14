@@ -49,8 +49,8 @@ def search_youtube(topic: str, max_results: int = 5) -> list[dict]:
                 }
             )
 
-        # Sort by view count descending
-        results.sort(key=lambda x: x["view_count"], reverse=True)
+        # Sort: trusted channels first, then by view count descending
+        results.sort(key=lambda x: (x["trusted"], x["view_count"]), reverse=True)
         top = results[:max_results]
         trusted_count = sum(1 for r in top if r["trusted"])
         print(

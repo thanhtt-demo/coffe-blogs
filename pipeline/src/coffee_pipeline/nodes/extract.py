@@ -22,6 +22,32 @@ def _cache_dir(topic: str) -> Path:
     return _CACHE_ROOT / slug
 
 
+def _describe_image_material(mat: dict) -> str:
+    """Use LLM vision to describe an image material, returning text content."""
+    try:
+        from ..llm import describe_image
+
+        file_path = Path(mat["file_path"])
+        if not file_path.is_file():
+            print(f"[Extract] Image file not found: {file_path}")
+            return ""
+
+        img_bytes = file_path.read_bytes()
+        ext = file_path.suffix.lower()
+        ext_to_mime = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+        mime = ext_to_mime.get(ext, "image/jpeg")
+
+        context = mat.get("name", "")
+        if mat.get("description"):
+            context += f" — {mat['description']}"
+
+        print(f"[Extract] Describing image via LLM vision: {mat.get('name', file_path.name)}")
+        return describe_image(img_bytes, mime, context)
+    except Exception as e:
+        print(f"[Extract] Image description failed: {e}")
+        return ""
+
+
 _RELEVANCE_SYSTEM_PROMPT = (
     "You are a research relevance classifier. Given a topic about coffee and a list of "
     "academic papers (title + abstract), return ONLY a JSON array of indices (0-based) "
@@ -163,6 +189,36 @@ def extract_node(state: ResearchState) -> dict:
                 }
             )
             total_chars += len(content)
+
+    # --- Inject user materials ---
+    user_materials = state.get("user_materials", [])
+    for mat in user_materials:
+        if total_chars >= TOTAL_BUDGET:
+            print(f"[Extract] Total budget {TOTAL_BUDGET} chars reached, skipping user materials")
+            break
+
+        mat_type = mat.get("file_type", "text")
+
+        # Image materials: use cached extracted_text if available, else LLM vision
+        if mat_type == "image":
+            content = (mat.get("content") or "").strip()
+            if not content and mat.get("file_path"):
+                content = _describe_image_material(mat)
+        else:
+            content = (mat.get("content") or "").strip()
+
+        if not content:
+            print(f"[Extract] Skipping empty user material: {mat.get('name', 'unknown')}")
+            continue
+        content = content[:MAX_PER_SOURCE]
+        mat_type = mat.get("file_type", "text")
+        docs.append({
+            "title": mat.get("name", "User Material"),
+            "url": "",
+            "content": content,
+            "source_type": "user_material",
+        })
+        total_chars += len(content)
 
     print(
         f"[Extract] {len(docs)} sources extracted, "

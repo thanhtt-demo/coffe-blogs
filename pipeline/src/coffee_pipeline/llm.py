@@ -43,6 +43,41 @@ def call_llm(
     return _call_bedrock(system, user, max_tokens, temperature)
 
 
+def describe_image(image_bytes: bytes, media_type: str, context: str = "") -> str:
+    """Use LLM vision to describe an image and return a text summary.
+
+    Args:
+        image_bytes: raw bytes of the image file.
+        media_type: MIME type, e.g. "image/jpeg", "image/png", "image/webp".
+        context: optional hint (e.g. material name/description) to guide the
+                 description.
+
+    Returns:
+        A Vietnamese text description of the image content, or empty string
+        on failure.
+    """
+    prompt = (
+        "Hãy trích xuất chính xác toàn bộ nội dung văn bản và thông tin có trong hình ảnh này. "
+        "Chỉ ghi lại những gì thực sự xuất hiện trong ảnh — không thêm, không bớt, không diễn giải. "
+        "Nếu ảnh chứa text, ghi lại nguyên văn. Nếu ảnh chứa biểu đồ/bảng, mô tả dữ liệu chính xác. "
+        "Trả lời bằng tiếng Việt."
+    )
+    if context:
+        prompt += f"\n\nNgữ cảnh: {context}"
+
+    provider = _get_provider()
+    try:
+        if provider == "openai":
+            result = _describe_image_openai(image_bytes, media_type, prompt)
+        else:
+            result = _describe_image_bedrock(image_bytes, media_type, prompt)
+        print(f"[LLM] Image described: {len(result)} chars")
+        return result
+    except Exception as e:
+        print(f"[LLM] Image description failed ({provider}): {type(e).__name__}: {e}")
+        return ""
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -114,3 +149,76 @@ def _call_openai(system: str, user: str, max_tokens: int, temperature: float) ->
     }
     text = response.choices[0].message.content or ""
     return text, usage
+
+
+# ---------------------------------------------------------------------------
+# Vision helpers
+# ---------------------------------------------------------------------------
+
+def _describe_image_bedrock(image_bytes: bytes, media_type: str, prompt: str) -> str:
+    import base64
+    import boto3
+
+    region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+    client = boto3.client("bedrock-runtime", region_name=region)
+    response = client.converse(
+        modelId=_get_bedrock_model(),
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "image": {
+                        "format": media_type.split("/")[-1],  # jpeg, png, webp
+                        "source": {"bytes": image_bytes},
+                    }
+                },
+                {"text": prompt},
+            ],
+        }],
+        inferenceConfig={"maxTokens": 2048, "temperature": 0.3},
+    )
+    return response["output"]["message"]["content"][0]["text"]
+
+
+def _describe_image_openai(image_bytes: bytes, media_type: str, prompt: str) -> str:
+    import base64
+    from openai import OpenAI
+
+    client = OpenAI()
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    data_url = f"data:{media_type};base64,{b64}"
+    model = _get_openai_model()
+
+    # Use Responses API with input_image format (works with gpt-5.x models)
+    try:
+        response = client.responses.create(
+            model=model,
+            input=[{
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": data_url},
+                ],
+            }],
+        )
+        return response.output_text or ""
+    except Exception as e:
+        print(f"[LLM] Responses API vision failed with {model}: {e}")
+        # Fallback: Chat Completions API with gpt-4o
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                }],
+                max_completion_tokens=2048,
+                temperature=0.3,
+            )
+            return response.choices[0].message.content or ""
+        except Exception as e2:
+            print(f"[LLM] Chat Completions fallback also failed: {e2}")
+            raise

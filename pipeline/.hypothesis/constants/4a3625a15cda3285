@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\nodes\extract.py
+# hypothesis_version: 6.151.9
+
+[0.0, 200, 512, 15000, 80000, '.jpeg', '.jpg', '.png', '.webp', 'PIPELINE_DRY_RUN', 'User Material', 'abstract', 'arxiv', 'cache', 'content', 'description', 'docs.json', 'en', 'extracted_docs', 'file_path', 'file_type', 'image', 'image/jpeg', 'image/png', 'image/webp', 'name', 'openalex', 'search_results', 'semantic_scholar', 'source', 'source_type', 'sources.json', 'text', 'title', 'topic', 'url', 'user_material', 'user_materials', 'utf-8', 'vi', 'video_id', 'web', 'youtube']

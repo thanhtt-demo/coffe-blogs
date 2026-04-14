@@ -14,24 +14,39 @@ def research_node(state: ResearchState) -> dict:
     - Papers: ArXiv + OpenAlex, dedup by title, top 10
     - Web:    DuckDuckGo, dedup by URL, top 5 (blog/news chuyên ngành)
     - Videos: YouTube, dedup by id, sort by views, top 5
+
+    Respects ``state["research_sources"]`` to skip disabled sources.
     """
     topic = state["topic"]
     queries: list[str] = state.get("search_queries") or [topic]  # type: ignore[attr-defined]
+    enabled_raw = state.get("research_sources")
+    enabled = set(enabled_raw) if enabled_raw is not None else {"arxiv", "openalex", "web", "youtube"}
 
-    print(f"[Research] Running {len(queries)} queries × 4 sources in parallel (ArXiv + OpenAlex + Web + YouTube)...")
+    active_sources = [s for s in ["arxiv", "openalex", "web", "youtube"] if s in enabled]
+
+    if not active_sources:
+        print("[Research] All sources disabled — skipping research")
+        return {"search_results": []}
+
+    print(f"[Research] Running {len(queries)} queries × {len(active_sources)} sources ({', '.join(active_sources)})...")
 
     arxiv_results: list[dict] = []
     ss_results: list[dict] = []
     web_results: list[dict] = []
     yt_results: list[dict] = []
 
-    with ThreadPoolExecutor(max_workers=min(len(queries) * 4, 16)) as executor:
+    source_fn = {
+        "arxiv": search_arxiv,
+        "openalex": search_openalex,
+        "web": search_web,
+        "youtube": search_youtube,
+    }
+
+    with ThreadPoolExecutor(max_workers=min(len(queries) * len(active_sources), 16)) as executor:
         futures: dict = {}
         for q in queries:
-            futures[executor.submit(search_arxiv, q, 5)] = ("arxiv", q)
-            futures[executor.submit(search_openalex, q, 5)] = ("openalex", q)
-            futures[executor.submit(search_web, q, 5)] = ("web", q)
-            futures[executor.submit(search_youtube, q, 5)] = ("youtube", q)
+            for src in active_sources:
+                futures[executor.submit(source_fn[src], q, 5)] = (src, q)
 
         for future in as_completed(futures):
             source, query = futures[future]
@@ -83,7 +98,7 @@ def research_node(state: ResearchState) -> dict:
     videos = videos_deduped[:5]
     all_results = papers + web_pages + videos
 
-    if len(all_results) < 2:
+    if len(all_results) < 2 and active_sources:
         raise ValueError(
             f"Not enough sources for topic '{topic}'. "
             "Try a more specific English keyword, e.g. 'V60 brew ratio'."

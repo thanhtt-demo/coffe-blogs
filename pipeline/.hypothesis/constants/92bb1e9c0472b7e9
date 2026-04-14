@@ -1,0 +1,4 @@
+# file: E:\AWS\blogs\coffe-blogs\pipeline\src\coffee_pipeline\tools\arxiv_tool.py
+# hypothesis_version: 6.151.9
+
+['abstract', 'arxiv', 'source', 'title', 'url']

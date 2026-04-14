@@ -114,20 +114,20 @@ def test_youtube_returns_empty_on_error():
 
 
 def test_derive_filename_from_frontmatter():
-    from coffee_pipeline.cli import _derive_filename
+    from coffee_pipeline.utils import derive_filename
 
     draft = "---\ntitle: 'Khoa Học Rang Cà Phê'\n---\n\nNội dung..."
-    filename = _derive_filename(draft, "fallback")
+    filename = derive_filename(draft, "fallback")
     assert filename.endswith(".md")
     assert "khoa" in filename.lower()
     assert "rang" in filename.lower()
 
 
 def test_derive_filename_fallback_to_topic():
-    from coffee_pipeline.cli import _derive_filename
+    from coffee_pipeline.utils import derive_filename
 
     draft = "No frontmatter here"
-    filename = _derive_filename(draft, "V60 Brew Ratio")
+    filename = derive_filename(draft, "V60 Brew Ratio")
     assert filename.endswith(".md")
     assert "v60" in filename.lower()
 

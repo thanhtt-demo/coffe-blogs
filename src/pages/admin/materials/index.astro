@@ -1,0 +1,773 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import Toast from '~/components/admin/Toast.astro';
+import ConfirmDialog from '~/components/admin/ConfirmDialog.astro';
+import { Icon } from 'astro-icon/components';
+---
+
+<AdminLayout title="Tư liệu">
+  <!-- Header: title with count + type filter -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h1 class="text-2xl font-bold text-zinc-900">
+      Tư liệu nghiên cứu (<span id="material-count">0</span>)
+    </h1>
+    <div class="flex items-center gap-2">
+      <label for="type-filter" class="sr-only">Lọc loại tư liệu</label>
+      <select
+        id="type-filter"
+        class="w-full sm:w-auto px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none appearance-none cursor-pointer bg-white pr-8"
+      >
+        <option value="">Tất cả</option>
+        <option value="text">Text</option>
+        <option value="image">Image</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Upload form -->
+  <section class="mb-6">
+    <form id="upload-form" class="bg-white border border-zinc-200 rounded-lg p-4">
+      <div class="space-y-3">
+        <div>
+          <label for="file-input" class="block text-sm font-medium text-zinc-900 mb-1">Chọn file</label>
+          <input
+            id="file-input"
+            type="file"
+            accept=".txt,.md,.pdf,.jpg,.jpeg,.png,.webp"
+            multiple
+            class="w-full text-sm text-zinc-700 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-zinc-100 file:text-zinc-700 file:cursor-pointer hover:file:bg-zinc-200 file:transition-colors file:duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md"
+          />
+          <p class="text-xs text-zinc-500 mt-1">.txt, .md, .pdf, .jpg, .jpeg, .png, .webp</p>
+        </div>
+        <div>
+          <label for="name-input" class="block text-sm font-medium text-zinc-900 mb-1">Tên hiển thị</label>
+          <input
+            id="name-input"
+            type="text"
+            placeholder="Nhập tên hiển thị cho tư liệu"
+            required
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+          />
+        </div>
+        <div>
+          <label for="desc-input" class="block text-sm font-medium text-zinc-900 mb-1">Mô tả ngắn</label>
+          <input
+            id="desc-input"
+            type="text"
+            placeholder="Mô tả ngắn (tùy chọn)"
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+          />
+        </div>
+        <div class="flex justify-end">
+          <button
+            id="upload-btn"
+            type="submit"
+            class="inline-flex items-center justify-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            <Icon name="tabler:upload" class="w-4 h-4" />
+            Tải lên
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <hr class="border-zinc-200 mb-6" />
+
+  <!-- Loading state -->
+  <div id="loading-state" class="text-center text-zinc-400 text-sm py-12">
+    <Icon name="tabler:loader-2" class="w-5 h-5 inline-block animate-spin" />
+    <span class="ml-1.5">Đang tải...</span>
+  </div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="text-center py-16 hidden">
+    <p class="text-zinc-500 text-sm">Chưa có tư liệu nào.</p>
+  </div>
+
+  <!-- Table (desktop) -->
+  <div id="table-container" class="hidden">
+    <div class="w-full border border-zinc-200 rounded-lg overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-zinc-50">
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Tên</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Loại</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Dung lượng</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Ngày tải</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Rows rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card list (mobile) -->
+  <div id="card-container" class="hidden">
+    <div id="card-list" class="space-y-3">
+      <!-- Cards rendered by JS -->
+    </div>
+  </div>
+
+  <Toast />
+  <ConfirmDialog />
+</AdminLayout>
+
+<script is:inline>
+  const API_BASE = 'http://localhost:8000';
+
+  // State
+  let allMaterials = [];
+  let expandedId = null;
+
+  // DOM refs
+  const materialCount = document.getElementById('material-count');
+  const typeFilter = document.getElementById('type-filter');
+  const uploadForm = document.getElementById('upload-form');
+  const fileInput = document.getElementById('file-input');
+  const nameInput = document.getElementById('name-input');
+  const descInput = document.getElementById('desc-input');
+  const uploadBtn = document.getElementById('upload-btn');
+  const loadingState = document.getElementById('loading-state');
+  const emptyState = document.getElementById('empty-state');
+  const tableContainer = document.getElementById('table-container');
+  const tableBody = document.getElementById('table-body');
+  const cardContainer = document.getElementById('card-container');
+  const cardList = document.getElementById('card-list');
+
+  // Auth
+  function getApiKey() {
+    return sessionStorage.getItem('apiKey');
+  }
+  function authHeaders() {
+    return { Authorization: 'Bearer ' + getApiKey() };
+  }
+  function handleUnauth() {
+    sessionStorage.removeItem('apiKey');
+    window.location.href = '/admin/login';
+  }
+
+  // Helpers
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    var dd = String(d.getDate()).padStart(2, '0');
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var yyyy = d.getFullYear();
+    return dd + '/' + mm + '/' + yyyy;
+  }
+
+  function formatSize(bytes) {
+    if (bytes == null) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function typeBadge(type) {
+    if (type === 'image') {
+      return '<span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-medium">image</span>';
+    }
+    return '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">text</span>';
+  }
+
+  function extractedBadge(m) {
+    if (m.extracted) {
+      return '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">extracted</span>';
+    }
+    return '';
+  }
+
+  function renderPreview(m) {
+    if (m.id !== expandedId) return '';
+    var parts = '';
+    // Show image thumbnail for image materials
+    if (m.file_type === 'image') {
+      parts +=
+        '<img src="' +
+        API_BASE +
+        '/api/materials/' +
+        encodeURIComponent(m.id) +
+        '/file" alt="' +
+        escapeHtml(m.name) +
+        '" class="max-h-48 object-contain rounded mb-3" />';
+    }
+    // Show extracted text if available
+    if (m.extracted && m.extracted_text) {
+      parts +=
+        '<div class="text-xs font-medium text-green-700 mb-1">Extracted text (' +
+        m.extracted_text.length +
+        ' chars):</div><div class="bg-zinc-100 rounded-md p-3 text-sm text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto">' +
+        escapeHtml(m.extracted_text) +
+        '</div>';
+      // Translate button or translated text
+      if (m.translated_text) {
+        parts +=
+          '<div class="text-xs font-medium text-blue-700 mt-3 mb-1">Bản dịch tiếng Việt:</div><div class="bg-blue-50 rounded-md p-3 text-sm text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto border border-blue-200">' +
+          escapeHtml(m.translated_text) +
+          '</div>';
+      } else {
+        parts +=
+          '<div class="mt-2"><button type="button" class="translate-btn inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer" data-id="' +
+          escapeHtml(m.id) +
+          '">Dịch sang tiếng Việt</button></div>';
+      }
+    } else if (m.file_type !== 'image') {
+      var excerpt = m._excerpt || '';
+      if (excerpt) {
+        parts +=
+          '<div class="bg-zinc-100 rounded-md p-3 text-sm text-zinc-700 font-mono whitespace-pre-wrap">' +
+          escapeHtml(excerpt) +
+          '</div>';
+      }
+    }
+    if (!parts) return '';
+    return '<tr class="border-t border-zinc-100 bg-zinc-50"><td colspan="5" class="px-4 py-3">' + parts + '</td></tr>';
+  }
+
+  function renderCardPreview(m) {
+    if (m.id !== expandedId) return '';
+    var parts = '';
+    if (m.file_type === 'image') {
+      parts +=
+        '<img src="' +
+        API_BASE +
+        '/api/materials/' +
+        encodeURIComponent(m.id) +
+        '/file" alt="' +
+        escapeHtml(m.name) +
+        '" class="max-h-48 object-contain rounded mb-3" />';
+    }
+    if (m.extracted && m.extracted_text) {
+      parts +=
+        '<div class="text-xs font-medium text-green-700 mb-1">Extracted text (' +
+        m.extracted_text.length +
+        ' chars):</div><div class="bg-zinc-100 rounded-md p-3 text-sm text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto">' +
+        escapeHtml(m.extracted_text) +
+        '</div>';
+      if (m.translated_text) {
+        parts +=
+          '<div class="text-xs font-medium text-blue-700 mt-3 mb-1">Bản dịch tiếng Việt:</div><div class="bg-blue-50 rounded-md p-3 text-sm text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto border border-blue-200">' +
+          escapeHtml(m.translated_text) +
+          '</div>';
+      } else {
+        parts +=
+          '<div class="mt-2"><button type="button" class="translate-btn inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer" data-id="' +
+          escapeHtml(m.id) +
+          '">Dịch sang tiếng Việt</button></div>';
+      }
+    } else if (m.file_type !== 'image') {
+      var excerpt = m._excerpt || '';
+      if (excerpt) {
+        parts +=
+          '<div class="bg-zinc-100 rounded-md p-3 text-sm text-zinc-700 font-mono whitespace-pre-wrap">' +
+          escapeHtml(excerpt) +
+          '</div>';
+      }
+    }
+    if (!parts) return '';
+    return '<div class="mt-3">' + parts + '</div>';
+  }
+
+  // Delete icon as inline SVG (since astro-icon only works in Astro templates)
+  var trashSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>';
+  var extractSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 17h6"/><path d="M9 13h6"/></svg>';
+  var spinnerSvg =
+    '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"></path></svg>';
+
+  // Extract result cache
+  var extractResults = {};
+
+  function renderExtractResult(m) {
+    if (!extractResults[m.id]) return '';
+    var r = extractResults[m.id];
+    if (r.loading) {
+      return (
+        '<tr class="border-t border-zinc-100 bg-blue-50"><td colspan="5" class="px-4 py-3 text-sm text-blue-600">' +
+        spinnerSvg +
+        ' Đang extract...</td></tr>'
+      );
+    }
+    if (r.error) {
+      return (
+        '<tr class="border-t border-zinc-100 bg-red-50"><td colspan="5" class="px-4 py-3 text-sm text-red-600">' +
+        escapeHtml(r.error) +
+        '</td></tr>'
+      );
+    }
+    return (
+      '<tr class="border-t border-zinc-100 bg-green-50"><td colspan="5" class="px-4 py-3"><div class="text-xs font-medium text-green-700 mb-1">Extracted text (' +
+      r.content.length +
+      ' chars):</div><div class="bg-white rounded-md p-3 text-sm text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto border border-green-200">' +
+      escapeHtml(r.content) +
+      '</div></td></tr>'
+    );
+  }
+
+  function renderCardExtractResult(m) {
+    if (!extractResults[m.id]) return '';
+    var r = extractResults[m.id];
+    if (r.loading) {
+      return (
+        '<div class="mt-3 text-sm text-blue-600 flex items-center gap-1.5">' + spinnerSvg + ' Đang extract...</div>'
+      );
+    }
+    if (r.error) {
+      return '<div class="mt-3 text-sm text-red-600">' + escapeHtml(r.error) + '</div>';
+    }
+    return (
+      '<div class="mt-3"><div class="text-xs font-medium text-green-700 mb-1">Extracted text (' +
+      r.content.length +
+      ' chars):</div><div class="bg-white rounded-md p-3 text-sm text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto border border-green-200">' +
+      escapeHtml(r.content) +
+      '</div></div>'
+    );
+  }
+
+  // Rendering
+  function renderTableRow(m) {
+    var desc = m.description ? '<p class="text-xs text-zinc-500 mt-0.5">' + escapeHtml(m.description) + '</p>' : '';
+    return (
+      '<tr class="border-t border-zinc-200 hover:bg-zinc-50 transition-colors duration-200 cursor-pointer" data-id="' +
+      escapeHtml(m.id) +
+      '">' +
+      '<td class="px-4 py-3 text-sm"><span class="font-medium text-zinc-900">' +
+      escapeHtml(m.name) +
+      '</span>' +
+      desc +
+      '</td>' +
+      '<td class="px-4 py-3 text-sm">' +
+      typeBadge(m.file_type) +
+      ' ' +
+      extractedBadge(m) +
+      '</td>' +
+      '<td class="px-4 py-3 text-sm text-zinc-500">' +
+      formatSize(m.file_size) +
+      '</td>' +
+      '<td class="px-4 py-3 text-sm text-zinc-500">' +
+      formatDate(m.created_at) +
+      '</td>' +
+      '<td class="px-4 py-3 text-sm text-right flex items-center justify-end gap-1">' +
+      '<button type="button" class="extract-btn text-zinc-400 hover:text-blue-600 transition-colors duration-200 cursor-pointer p-1 rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="' +
+      escapeHtml(m.id) +
+      '" title="Test extract text">' +
+      extractSvg +
+      '</button>' +
+      '<button type="button" class="delete-btn text-zinc-400 hover:text-red-600 transition-colors duration-200 cursor-pointer p-1 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" data-id="' +
+      escapeHtml(m.id) +
+      '" data-name="' +
+      escapeHtml(m.name) +
+      '" aria-label="Xóa ' +
+      escapeHtml(m.name) +
+      '">' +
+      trashSvg +
+      '</button>' +
+      '</td>' +
+      '</tr>' +
+      renderExtractResult(m) +
+      renderPreview(m)
+    );
+  }
+
+  function renderCard(m) {
+    var desc = m.description ? '<p class="text-xs text-zinc-500 mt-1">' + escapeHtml(m.description) + '</p>' : '';
+    return (
+      '<div class="bg-white border border-zinc-200 rounded-lg p-4 cursor-pointer hover:border-zinc-300 transition-colors duration-200" data-id="' +
+      escapeHtml(m.id) +
+      '">' +
+      '<div class="flex items-start justify-between gap-3">' +
+      '<div class="flex-1 min-w-0">' +
+      '<span class="font-medium text-zinc-900 text-sm">' +
+      escapeHtml(m.name) +
+      '</span>' +
+      desc +
+      '</div>' +
+      '<div class="flex items-center gap-1 shrink-0">' +
+      '<button type="button" class="extract-btn text-zinc-400 hover:text-blue-600 transition-colors duration-200 cursor-pointer p-1 rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="' +
+      escapeHtml(m.id) +
+      '" title="Test extract text">' +
+      extractSvg +
+      '</button>' +
+      '<button type="button" class="delete-btn text-zinc-400 hover:text-red-600 transition-colors duration-200 cursor-pointer p-1 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" data-id="' +
+      escapeHtml(m.id) +
+      '" data-name="' +
+      escapeHtml(m.name) +
+      '" aria-label="Xóa ' +
+      escapeHtml(m.name) +
+      '">' +
+      trashSvg +
+      '</button>' +
+      '</div>' +
+      '</div>' +
+      '<div class="flex items-center gap-3 mt-2">' +
+      typeBadge(m.file_type) +
+      ' ' +
+      extractedBadge(m) +
+      '<span class="text-xs text-zinc-500">' +
+      formatSize(m.file_size) +
+      '</span>' +
+      '<span class="text-xs text-zinc-500">' +
+      formatDate(m.created_at) +
+      '</span>' +
+      '</div>' +
+      renderCardExtractResult(m) +
+      renderCardPreview(m) +
+      '</div>'
+    );
+  }
+
+  function getFiltered() {
+    var selected = typeFilter.value;
+    return selected
+      ? allMaterials.filter(function (m) {
+          return m.file_type === selected;
+        })
+      : allMaterials;
+  }
+
+  function renderMaterials() {
+    var filtered = getFiltered();
+    materialCount.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      emptyState.classList.remove('hidden');
+      tableContainer.classList.add('hidden');
+      tableContainer.classList.remove('md:block');
+      cardContainer.classList.add('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+
+    // Table (desktop)
+    tableContainer.classList.remove('hidden');
+    tableContainer.classList.add('md:block');
+    tableBody.innerHTML = filtered.map(renderTableRow).join('');
+
+    // Cards (mobile)
+    cardContainer.classList.remove('hidden');
+    cardList.innerHTML = filtered.map(renderCard).join('');
+  }
+
+  // Toggle preview
+  function handleTogglePreview(id) {
+    if (expandedId === id) {
+      expandedId = null;
+    } else {
+      expandedId = id;
+      // For text materials, fetch excerpt if not cached
+      var m = allMaterials.find(function (x) {
+        return x.id === id;
+      });
+      if (m && m.file_type === 'text' && !m._excerpt) {
+        fetchExcerpt(m);
+        return;
+      }
+    }
+    renderMaterials();
+  }
+
+  async function fetchExcerpt(m) {
+    try {
+      var res = await fetch(API_BASE + '/api/materials/' + encodeURIComponent(m.id) + '/file', {
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        var text = await res.text();
+        m._excerpt = text.substring(0, 200) + (text.length > 200 ? '…' : '');
+      } else {
+        m._excerpt = '(Không thể tải nội dung)';
+      }
+    } catch (e) {
+      m._excerpt = '(Không thể tải nội dung)';
+    }
+    renderMaterials();
+  }
+
+  // API calls
+  async function fetchMaterials() {
+    try {
+      var url = API_BASE + '/api/materials';
+      var res = await fetch(url, { headers: authHeaders() });
+      if (res.status === 401) {
+        handleUnauth();
+        return;
+      }
+      if (!res.ok) throw new Error('Fetch failed');
+
+      allMaterials = await res.json();
+      allMaterials.sort(function (a, b) {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      loadingState.classList.add('hidden');
+      renderMaterials();
+    } catch (e) {
+      loadingState.innerHTML = '<span class="text-red-500 text-sm">Không thể kết nối tới server</span>';
+    }
+  }
+
+  async function uploadMaterial(formData) {
+    var res = await fetch(API_BASE + '/api/materials/upload', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    });
+
+    if (res.status === 401) {
+      handleUnauth();
+      return;
+    }
+    if (!res.ok) {
+      var err = await res.json().catch(function () {
+        return { detail: 'Lỗi không xác định' };
+      });
+      throw new Error(err.detail || 'Không thể tải lên');
+    }
+
+    return await res.json();
+  }
+
+  async function deleteMaterial(id) {
+    var res = await fetch(API_BASE + '/api/materials/' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+
+    if (res.status === 401) {
+      handleUnauth();
+      return;
+    }
+    if (!res.ok) {
+      var err = await res.json().catch(function () {
+        return { detail: 'Lỗi không xác định' };
+      });
+      throw new Error(err.detail || 'Không thể xóa');
+    }
+  }
+
+  // Upload form handling
+  uploadForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    var files = fileInput.files;
+    var name = nameInput.value.trim();
+
+    if (!files || files.length === 0) {
+      if (window.showToast) window.showToast('Vui lòng chọn ít nhất một file', 'error');
+      return;
+    }
+    if (!name) {
+      if (window.showToast) window.showToast('Vui lòng nhập tên hiển thị', 'error');
+      nameInput.focus();
+      return;
+    }
+
+    // Disable form
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML =
+      '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"></path></svg> Đang tải...';
+    fileInput.disabled = true;
+    nameInput.disabled = true;
+    descInput.disabled = true;
+
+    try {
+      var formData = new FormData();
+      for (var i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+      formData.append('name', name);
+      formData.append('description', descInput.value.trim());
+
+      await uploadMaterial(formData);
+
+      // Reset form
+      fileInput.value = '';
+      nameInput.value = '';
+      descInput.value = '';
+
+      var msg = files.length > 1 ? 'Đã tải lên ' + files.length + ' file thành công' : 'Đã tải lên thành công';
+      if (window.showToast) window.showToast(msg, 'success');
+      expandedId = null;
+      await fetchMaterials();
+    } catch (err) {
+      if (window.showToast) window.showToast(err.message, 'error');
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 9l5 -5l5 5"/><path d="M12 4l0 12"/></svg> Tải lên';
+      fileInput.disabled = false;
+      nameInput.disabled = false;
+      descInput.disabled = false;
+    }
+  });
+
+  // Delete handling (event delegation)
+  function handleDeleteClick(e) {
+    var btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+    e.stopPropagation();
+
+    var id = btn.dataset.id;
+    var name = btn.dataset.name;
+
+    if (window.showConfirm) {
+      window.showConfirm(
+        'Xóa tư liệu',
+        'Bạn có chắc muốn xóa "' + name + '"? Hành động này không thể hoàn tác.',
+        'Xóa',
+        async function () {
+          try {
+            await deleteMaterial(id);
+            allMaterials = allMaterials.filter(function (m) {
+              return m.id !== id;
+            });
+            if (expandedId === id) expandedId = null;
+            renderMaterials();
+            if (window.showToast) window.showToast('Đã xóa thành công', 'success');
+          } catch (err) {
+            if (window.showToast) window.showToast(err.message, 'error');
+          }
+        },
+        'danger'
+      );
+    }
+  }
+
+  // Row/card click → toggle preview (event delegation)
+  function handleRowClick(e) {
+    if (e.target.closest('.delete-btn') || e.target.closest('.extract-btn') || e.target.closest('.translate-btn'))
+      return;
+    var row = e.target.closest('tr[data-id]');
+    if (row) {
+      handleTogglePreview(row.dataset.id);
+    }
+  }
+
+  function handleCardClick(e) {
+    if (e.target.closest('.delete-btn') || e.target.closest('.extract-btn') || e.target.closest('.translate-btn'))
+      return;
+    var card = e.target.closest('[data-id]');
+    if (card) {
+      handleTogglePreview(card.dataset.id);
+    }
+  }
+
+  // Extract test handling (event delegation)
+  function handleExtractClick(e) {
+    var btn = e.target.closest('.extract-btn');
+    if (!btn) return;
+    e.stopPropagation();
+
+    var id = btn.dataset.id;
+    if (extractResults[id] && extractResults[id].loading) return;
+
+    extractResults[id] = { loading: true };
+    renderMaterials();
+
+    fetch(API_BASE + '/api/materials/' + encodeURIComponent(id) + '/extract', {
+      method: 'POST',
+      headers: authHeaders(),
+    })
+      .then(function (res) {
+        if (res.status === 401) {
+          handleUnauth();
+          return;
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data) return;
+        if (data.detail) {
+          extractResults[id] = { error: data.detail };
+        } else {
+          extractResults[id] = { content: data.content || '(Không extract được nội dung)' };
+          // Update material's extracted status in local state
+          var mat = allMaterials.find(function (m) {
+            return m.id === id;
+          });
+          if (mat && data.extracted) {
+            mat.extracted = true;
+            mat.extracted_text = data.content;
+          }
+        }
+        renderMaterials();
+      })
+      .catch(function (err) {
+        extractResults[id] = { error: err.message || 'Lỗi kết nối' };
+        renderMaterials();
+      });
+  }
+
+  // Events
+  typeFilter.addEventListener('change', function () {
+    expandedId = null;
+    renderMaterials();
+  });
+  tableBody.addEventListener('click', handleRowClick);
+  tableBody.addEventListener('click', handleDeleteClick);
+  tableBody.addEventListener('click', handleExtractClick);
+  tableBody.addEventListener('click', handleTranslateClick);
+  cardList.addEventListener('click', handleCardClick);
+  cardList.addEventListener('click', handleDeleteClick);
+  cardList.addEventListener('click', handleExtractClick);
+  cardList.addEventListener('click', handleTranslateClick);
+
+  // Translate handling (event delegation)
+  function handleTranslateClick(e) {
+    var btn = e.target.closest('.translate-btn');
+    if (!btn) return;
+    e.stopPropagation();
+
+    var id = btn.dataset.id;
+    btn.disabled = true;
+    btn.innerHTML = spinnerSvg + ' Đang dịch...';
+
+    fetch(API_BASE + '/api/materials/' + encodeURIComponent(id) + '/translate', {
+      method: 'POST',
+      headers: authHeaders(),
+    })
+      .then(function (res) {
+        if (res.status === 401) {
+          handleUnauth();
+          return;
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data) return;
+        if (data.detail) {
+          if (window.showToast) window.showToast(data.detail, 'error');
+          return;
+        }
+        var mat = allMaterials.find(function (m) {
+          return m.id === id;
+        });
+        if (mat && data.translated_text) {
+          mat.translated_text = data.translated_text;
+        }
+        renderMaterials();
+      })
+      .catch(function (err) {
+        if (window.showToast) window.showToast(err.message || 'Lỗi dịch', 'error');
+      });
+  }
+
+  // Auth guard + init
+  if (!getApiKey()) {
+    window.location.href = '/admin/login';
+  } else {
+    fetchMaterials();
+  }
+</script>

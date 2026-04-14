@@ -1,0 +1,473 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import Toast from '~/components/admin/Toast.astro';
+import ConfirmDialog from '~/components/admin/ConfirmDialog.astro';
+import { Icon } from 'astro-icon/components';
+---
+
+<AdminLayout title="Dashboard">
+  <!-- Create article form -->
+  <section class="mb-8">
+    <h1 class="text-2xl font-bold text-zinc-900 mb-4">Tạo bài viết mới</h1>
+    <form id="create-form" class="flex flex-col sm:flex-row gap-3">
+      <input
+        id="topic-input"
+        type="text"
+        placeholder="Nhập chủ đề bài viết (VD: Lịch sử cà phê tại Việt Nam)"
+        class="flex-1 px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+      />
+      <button
+        id="create-btn"
+        type="submit"
+        class="inline-flex items-center justify-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shrink-0"
+      >
+        <Icon name="tabler:plus" class="w-4 h-4" />
+        Tạo bài
+      </button>
+    </form>
+
+    <!-- Material selection (hidden if no materials) -->
+    <div id="materials-section" class="mt-4 hidden">
+      <p class="text-sm font-medium text-zinc-700 mb-2">Tư liệu tham khảo (tùy chọn)</p>
+      <div
+        id="materials-list"
+        class="bg-white border border-zinc-200 rounded-lg divide-y divide-zinc-100 max-h-60 overflow-y-auto"
+      >
+        <!-- Checkboxes rendered by JS -->
+      </div>
+      <p id="materials-counter" class="text-xs text-zinc-500 mt-1.5">Đã chọn: 0 tư liệu</p>
+    </div>
+
+    <!-- Research sources toggle -->
+    <div class="mt-4">
+      <p class="text-sm font-medium text-zinc-700 mb-2">Nguồn nghiên cứu</p>
+      <div class="flex flex-wrap gap-2">
+        <label
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-md text-sm cursor-pointer hover:bg-zinc-50 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+        >
+          <input
+            type="checkbox"
+            value="arxiv"
+            class="source-checkbox rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            checked
+          />
+          ArXiv
+        </label>
+        <label
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-md text-sm cursor-pointer hover:bg-zinc-50 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+        >
+          <input
+            type="checkbox"
+            value="openalex"
+            class="source-checkbox rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            checked
+          />
+          OpenAlex
+        </label>
+        <label
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-md text-sm cursor-pointer hover:bg-zinc-50 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+        >
+          <input
+            type="checkbox"
+            value="web"
+            class="source-checkbox rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            checked
+          />
+          Web Search
+        </label>
+        <label
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-md text-sm cursor-pointer hover:bg-zinc-50 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+        >
+          <input
+            type="checkbox"
+            value="youtube"
+            class="source-checkbox rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            checked
+          />
+          YouTube
+        </label>
+      </div>
+    </div>
+
+    <p id="topic-error" class="text-red-600 text-sm mt-1.5 hidden">Vui lòng nhập chủ đề bài viết</p>
+  </section>
+
+  <hr class="border-zinc-200 mb-8" />
+
+  <!-- Job list -->
+  <section>
+    <h2 class="text-lg font-semibold text-zinc-900 mb-4">Pipeline Jobs</h2>
+    <div id="job-list" class="space-y-4">
+      <!-- Jobs rendered by JS -->
+    </div>
+    <p id="empty-state" class="text-center text-zinc-500 text-sm py-12 hidden">Không có job nào</p>
+    <div id="loading-state" class="text-center text-zinc-400 text-sm py-12">
+      <Icon name="tabler:loader-2" class="w-5 h-5 inline-block animate-spin" />
+      <span class="ml-1.5">Đang tải...</span>
+    </div>
+  </section>
+
+  <Toast />
+  <ConfirmDialog />
+</AdminLayout>
+
+<script is:inline>
+  const API_BASE = 'http://localhost:8000';
+  const PIPELINE_STEPS = ['query_gen', 'research', 'extract', 'outline', 'image_fetch', 'draft', 'review', 'rewrite'];
+  const STEP_LABELS = {
+    query_gen: 'Tạo query',
+    research: 'Nghiên cứu',
+    extract: 'Trích xuất',
+    outline: 'Dàn ý',
+    image_fetch: 'Tải ảnh',
+    draft: 'Viết nháp',
+    review: 'Đánh giá',
+    rewrite: 'Viết lại',
+  };
+  const STATUS_MAP = {
+    pending: { label: 'Đang chờ', cls: 'bg-yellow-100 text-yellow-800' },
+    running: { label: 'Đang chạy', cls: 'bg-blue-100 text-blue-800' },
+    completed: { label: 'Hoàn thành', cls: 'bg-green-100 text-green-800' },
+    failed: { label: 'Thất bại', cls: 'bg-red-100 text-red-800' },
+  };
+
+  // State
+  const jobs = new Map();
+  const sseConnections = new Map();
+  let availableMaterials = [];
+
+  // DOM refs
+  const form = document.getElementById('create-form');
+  const topicInput = document.getElementById('topic-input');
+  const createBtn = document.getElementById('create-btn');
+  const topicError = document.getElementById('topic-error');
+  const jobList = document.getElementById('job-list');
+  const emptyState = document.getElementById('empty-state');
+  const loadingState = document.getElementById('loading-state');
+
+  // Auth
+  function getApiKey() {
+    return sessionStorage.getItem('apiKey');
+  }
+  function authHeaders() {
+    return { Authorization: `Bearer ${getApiKey()}` };
+  }
+  function handleUnauth() {
+    sessionStorage.removeItem('apiKey');
+    window.location.href = '/admin/login';
+  }
+
+  // ── Rendering ──
+
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderStatusBadge(status) {
+    const s = STATUS_MAP[status] || STATUS_MAP.pending;
+    return `<span class="${s.cls} px-2 py-0.5 rounded-full text-xs font-medium">${s.label}</span>`;
+  }
+
+  function renderProgress(job) {
+    if (job.status !== 'running' && job.status !== 'pending') return '';
+    const currentIdx = job.current_step ? PIPELINE_STEPS.indexOf(job.current_step) : -1;
+    const stepCount = currentIdx >= 0 ? currentIdx + 1 : 0;
+
+    const dots = PIPELINE_STEPS.map((step, i) => {
+      if (i < currentIdx) {
+        return `<div class="flex flex-col items-center gap-1">
+          <span class="w-3 h-3 rounded-full bg-green-500 inline-flex items-center justify-center text-white text-[8px]">✓</span>
+          <span class="text-xs text-zinc-500 hidden sm:block">${STEP_LABELS[step]}</span>
+        </div>`;
+      } else if (i === currentIdx) {
+        return `<div class="flex flex-col items-center gap-1">
+          <span class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
+          <span class="text-xs text-blue-600 font-medium hidden sm:block">${STEP_LABELS[step]}</span>
+        </div>`;
+      } else {
+        return `<div class="flex flex-col items-center gap-1">
+          <span class="w-3 h-3 rounded-full bg-zinc-200"></span>
+          <span class="text-xs text-zinc-500 hidden sm:block">${STEP_LABELS[step]}</span>
+        </div>`;
+      }
+    }).join('');
+
+    return `<div class="mt-3">
+      <div class="flex items-start justify-between gap-2">${dots}</div>
+      <p class="text-xs text-zinc-500 mt-2">Bước ${stepCount}/8</p>
+    </div>`;
+  }
+
+  function renderJobCard(job) {
+    let extra = '';
+
+    if (job.status === 'completed' && job.article_id) {
+      extra = `<a href="/admin/articles/${job.article_id}" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors duration-200 cursor-pointer mt-2">→ Xem bài viết</a>`;
+    } else if (job.status === 'failed' && job.error) {
+      extra = `<p class="text-red-600 text-sm mt-2">${escapeHtml(job.error)}</p>`;
+    }
+
+    // Show attached materials count
+    let materialsInfo = '';
+    if (job.material_ids && job.material_ids.length > 0) {
+      const names = job.material_ids.map((id) => {
+        const m = availableMaterials.find((mat) => mat.id === id);
+        return m ? escapeHtml(m.name) : id.substring(0, 8) + '…';
+      });
+      materialsInfo = `<p class="text-xs text-zinc-500 mt-1.5"><span class="bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded text-xs">📎 ${job.material_ids.length} tư liệu</span> ${names.join(', ')}</p>`;
+    }
+
+    const timestamps = [];
+    if (job.created_at) timestamps.push(`Tạo lúc: ${formatTime(job.created_at)}`);
+    if (job.completed_at && job.status === 'completed') timestamps.push(`Xong: ${formatTime(job.completed_at)}`);
+
+    return `<div class="bg-white border border-zinc-200 rounded-lg p-4" data-job-id="${job.id}">
+      <div class="flex items-start justify-between gap-3">
+        <h3 class="text-base font-medium text-zinc-900">${escapeHtml(job.topic)}</h3>
+        ${renderStatusBadge(job.status)}
+      </div>
+      ${renderProgress(job)}
+      ${materialsInfo}
+      ${extra}
+      ${timestamps.length ? `<p class="text-xs text-zinc-500 mt-2">${timestamps.join(' • ')}</p>` : ''}
+    </div>`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderAllJobs() {
+    const sorted = Array.from(jobs.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (sorted.length === 0) {
+      jobList.innerHTML = '';
+      emptyState.classList.remove('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      jobList.innerHTML = sorted.map(renderJobCard).join('');
+    }
+  }
+
+  function updateJobCard(job) {
+    const existing = jobList.querySelector(`[data-job-id="${job.id}"]`);
+    if (existing) {
+      const temp = document.createElement('div');
+      temp.innerHTML = renderJobCard(job);
+      existing.replaceWith(temp.firstElementChild);
+    } else {
+      renderAllJobs();
+    }
+  }
+
+  // ── SSE ──
+
+  function connectSSE(jobId) {
+    if (sseConnections.has(jobId)) return;
+    const job = jobs.get(jobId);
+    if (!job || (job.status !== 'pending' && job.status !== 'running')) return;
+
+    const es = new EventSource(`${API_BASE}/api/jobs/${jobId}/stream`);
+    sseConnections.set(jobId, es);
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const job = jobs.get(jobId);
+        if (!job) return;
+
+        if (data.step) job.current_step = data.step;
+        if (data.progress !== undefined) job.progress = data.progress;
+        if (data.status) job.status = data.status;
+        if (data.article_id) job.article_id = data.article_id;
+        if (data.error) job.error = data.error;
+
+        updateJobCard(job);
+
+        if (data.status === 'completed' || data.status === 'failed') {
+          // Fetch final state to get timestamps
+          fetchJob(jobId);
+          es.close();
+          sseConnections.delete(jobId);
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+      sseConnections.delete(jobId);
+      // Try to fetch final state
+      fetchJob(jobId);
+    };
+  }
+
+  // ── API calls ──
+
+  async function fetchJobs() {
+    try {
+      const res = await fetch(`${API_BASE}/api/jobs`);
+      if (res.status === 401) {
+        handleUnauth();
+        return;
+      }
+      const data = await res.json();
+      data.forEach((j) => {
+        jobs.set(j.id, j);
+        if (j.status === 'pending' || j.status === 'running') {
+          connectSSE(j.id);
+        }
+      });
+      loadingState.classList.add('hidden');
+      renderAllJobs();
+    } catch {
+      loadingState.innerHTML = '<span class="text-red-500 text-sm">Không thể kết nối tới server</span>';
+    }
+  }
+
+  async function fetchJob(jobId) {
+    try {
+      const res = await fetch(`${API_BASE}/api/jobs/${jobId}`);
+      if (res.ok) {
+        const j = await res.json();
+        jobs.set(j.id, j);
+        updateJobCard(j);
+      }
+    } catch {
+      /* silent */
+    }
+  }
+
+  async function fetchMaterials() {
+    try {
+      const res = await fetch(`${API_BASE}/api/materials`);
+      if (!res.ok) return;
+      availableMaterials = await res.json();
+      renderMaterialSelection();
+    } catch {
+      /* silent */
+    }
+  }
+
+  function renderMaterialSelection() {
+    const section = document.getElementById('materials-section');
+    const list = document.getElementById('materials-list');
+    if (!availableMaterials.length) {
+      section.classList.add('hidden');
+      return;
+    }
+    section.classList.remove('hidden');
+    list.innerHTML = availableMaterials
+      .map((m) => {
+        const badge =
+          m.file_type === 'image'
+            ? '<span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-medium">image</span>'
+            : '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">text</span>';
+        const size =
+          m.file_size < 1024
+            ? m.file_size + ' B'
+            : m.file_size < 1048576
+              ? (m.file_size / 1024).toFixed(1) + ' KB'
+              : (m.file_size / 1048576).toFixed(1) + ' MB';
+        const desc = m.description ? `<span class="text-zinc-500"> — ${escapeHtml(m.description)}</span>` : '';
+        return `<label class="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 transition-colors duration-200 cursor-pointer">
+        <input type="checkbox" value="${m.id}" class="material-checkbox rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+        <span class="flex-1 min-w-0 text-sm text-zinc-900 truncate">${escapeHtml(m.name)}${desc}</span>
+        ${badge}
+        <span class="text-xs text-zinc-500 shrink-0">${size}</span>
+      </label>`;
+      })
+      .join('');
+  }
+
+  document.getElementById('materials-list')?.addEventListener('change', () => {
+    const checked = document.querySelectorAll('.material-checkbox:checked');
+    document.getElementById('materials-counter').textContent = `Đã chọn: ${checked.length} tư liệu`;
+  });
+
+  async function createJob(topic) {
+    const selectedIds = Array.from(document.querySelectorAll('.material-checkbox:checked')).map((cb) => cb.value);
+    const selectedSources = Array.from(document.querySelectorAll('.source-checkbox:checked')).map((cb) => cb.value);
+    const res = await fetch(`${API_BASE}/api/jobs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify({ topic, material_ids: selectedIds, research_sources: selectedSources }),
+    });
+
+    if (res.status === 401) {
+      handleUnauth();
+      return;
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Lỗi không xác định' }));
+      throw new Error(err.detail || 'Không thể tạo job');
+    }
+
+    return await res.json();
+  }
+
+  // ── Form handling ──
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const topic = topicInput.value.trim();
+
+    // Validation
+    if (!topic) {
+      topicError.classList.remove('hidden');
+      topicInput.focus();
+      return;
+    }
+    topicError.classList.add('hidden');
+
+    // Disable form
+    createBtn.disabled = true;
+    topicInput.disabled = true;
+    createBtn.innerHTML =
+      '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"></path></svg> Đang tạo...';
+
+    try {
+      const job = await createJob(topic);
+      jobs.set(job.id, job);
+      emptyState.classList.add('hidden');
+      renderAllJobs();
+      connectSSE(job.id);
+      topicInput.value = '';
+      document.querySelectorAll('.material-checkbox:checked').forEach((cb) => {
+        cb.checked = false;
+      });
+      document.getElementById('materials-counter').textContent = 'Đã chọn: 0 tư liệu';
+      if (window.showToast) window.showToast('Đã tạo job thành công', 'success');
+    } catch (err) {
+      if (window.showToast) window.showToast(err.message, 'error');
+    } finally {
+      createBtn.disabled = false;
+      topicInput.disabled = false;
+      createBtn.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Tạo bài';
+    }
+  });
+
+  // Clear error on input
+  topicInput.addEventListener('input', () => {
+    if (topicInput.value.trim()) {
+      topicError.classList.add('hidden');
+    }
+  });
+
+  // ── Auth guard + init ──
+
+  if (!getApiKey()) {
+    window.location.href = '/admin/login';
+  } else {
+    fetchJobs();
+    fetchMaterials();
+  }
+</script>

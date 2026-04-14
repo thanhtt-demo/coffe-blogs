@@ -1,0 +1,167 @@
+---
+import { Icon } from 'astro-icon/components';
+---
+
+<!-- Confirm dialog overlay — hidden by default -->
+<div
+  id="confirm-dialog-overlay"
+  class="fixed inset-0 bg-black/50 z-40 hidden items-center justify-center"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="confirm-dialog-title"
+>
+  <div
+    id="confirm-dialog-container"
+    class="bg-white rounded-lg p-6 max-w-md w-[90%] shadow-lg opacity-0 scale-95 transition-all duration-300 ease-out"
+  >
+    <div class="flex items-start justify-between gap-3">
+      <h3 id="confirm-dialog-title" class="text-lg font-semibold text-zinc-900"></h3>
+      <button
+        id="confirm-dialog-close"
+        type="button"
+        class="shrink-0 text-zinc-400 hover:text-zinc-600 transition-colors duration-200 cursor-pointer"
+        aria-label="Đóng"
+      >
+        <Icon name="tabler:x" class="w-5 h-5" />
+      </button>
+    </div>
+    <p id="confirm-dialog-message" class="mt-2 text-sm text-zinc-600"></p>
+    <div class="flex justify-end gap-3 mt-6">
+      <button
+        id="confirm-dialog-cancel"
+        type="button"
+        class="bg-white text-zinc-700 border border-zinc-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        Hủy
+      </button>
+      <button
+        id="confirm-dialog-confirm"
+        type="button"
+        class="px-4 py-2 rounded-md text-sm font-medium text-white transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
+      >
+        <!-- Text set by JS -->
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  type ConfirmVariant = 'danger' | 'primary';
+
+  const CONFIRM_STYLES: Record<ConfirmVariant, { btn: string; ring: string }> = {
+    danger: {
+      btn: 'bg-red-600 hover:bg-red-700',
+      ring: 'focus:ring-red-500',
+    },
+    primary: {
+      btn: 'bg-blue-600 hover:bg-blue-700',
+      ring: 'focus:ring-blue-500',
+    },
+  };
+
+  let currentOnConfirm: (() => void) | null = null;
+
+  function showConfirm(
+    title: string,
+    message: string,
+    confirmText: string,
+    onConfirm: () => void,
+    variant: ConfirmVariant = 'primary'
+  ) {
+    const overlay = document.getElementById('confirm-dialog-overlay');
+    const container = document.getElementById('confirm-dialog-container');
+    const titleEl = document.getElementById('confirm-dialog-title');
+    const messageEl = document.getElementById('confirm-dialog-message');
+    const confirmBtn = document.getElementById('confirm-dialog-confirm');
+
+    if (!overlay || !container || !titleEl || !messageEl || !confirmBtn) return;
+
+    // Set content
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    confirmBtn.textContent = confirmText;
+    currentOnConfirm = onConfirm;
+
+    // Apply variant styles to confirm button
+    const style = CONFIRM_STYLES[variant] || CONFIRM_STYLES.primary;
+    // Remove previous variant classes
+    confirmBtn.className = `px-4 py-2 rounded-md text-sm font-medium text-white transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 ${style.btn} ${style.ring}`;
+
+    // Show overlay
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+
+    // Animate in
+    requestAnimationFrame(() => {
+      container.classList.remove('opacity-0', 'scale-95');
+      container.classList.add('opacity-100', 'scale-100');
+    });
+
+    // Trap focus on confirm button
+    confirmBtn.focus();
+  }
+
+  function hideConfirm() {
+    const overlay = document.getElementById('confirm-dialog-overlay');
+    const container = document.getElementById('confirm-dialog-container');
+    if (!overlay || !container) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReduced) {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+      container.classList.add('opacity-0', 'scale-95');
+      container.classList.remove('opacity-100', 'scale-100');
+      currentOnConfirm = null;
+      return;
+    }
+
+    container.classList.remove('opacity-100', 'scale-100');
+    container.classList.add('opacity-0', 'scale-95');
+
+    container.addEventListener(
+      'transitionend',
+      () => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+        currentOnConfirm = null;
+      },
+      { once: true }
+    );
+
+    // Fallback
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+      currentOnConfirm = null;
+    }, 350);
+  }
+
+  // Wire up buttons
+  document.getElementById('confirm-dialog-cancel')?.addEventListener('click', hideConfirm);
+  document.getElementById('confirm-dialog-close')?.addEventListener('click', hideConfirm);
+
+  document.getElementById('confirm-dialog-confirm')?.addEventListener('click', () => {
+    if (currentOnConfirm) currentOnConfirm();
+    hideConfirm();
+  });
+
+  // Close on overlay click (outside container)
+  document.getElementById('confirm-dialog-overlay')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) hideConfirm();
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const overlay = document.getElementById('confirm-dialog-overlay');
+      if (overlay && !overlay.classList.contains('hidden')) {
+        hideConfirm();
+      }
+    }
+  });
+
+  // Expose globally
+  (window as any).showConfirm = showConfirm;
+</script>

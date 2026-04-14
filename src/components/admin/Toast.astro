@@ -1,0 +1,95 @@
+---
+import { Icon } from 'astro-icon/components';
+---
+
+<!-- Toast container: JS will inject toast items here -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2" aria-live="polite"></div>
+
+<!-- Toast item template (hidden, cloned by JS) -->
+<template id="toast-template">
+  <div
+    class="toast-item flex items-start gap-3 px-4 py-3 rounded-lg border shadow-sm max-w-sm opacity-0 translate-x-4 transition-all duration-300 ease-out"
+    role="alert"
+  >
+    <Icon name="tabler:check" class="toast-icon-success w-5 h-5 mt-0.5 shrink-0 hidden" />
+    <Icon name="tabler:alert-circle" class="toast-icon-error w-5 h-5 mt-0.5 shrink-0 hidden" />
+    <Icon name="tabler:info-circle" class="toast-icon-info w-5 h-5 mt-0.5 shrink-0 hidden" />
+    <span class="toast-message text-sm font-medium flex-1"></span>
+    <button type="button" class="toast-close shrink-0 cursor-pointer" aria-label="Đóng thông báo">
+      <Icon name="tabler:x" class="w-4 h-4" />
+    </button>
+  </div>
+</template>
+
+<script>
+  const VARIANTS = {
+    success: {
+      classes: 'bg-green-50 border-green-200 text-green-800',
+      icon: 'toast-icon-success',
+    },
+    error: {
+      classes: 'bg-red-50 border-red-200 text-red-800',
+      icon: 'toast-icon-error',
+    },
+    info: {
+      classes: 'bg-blue-50 border-blue-200 text-blue-800',
+      icon: 'toast-icon-info',
+    },
+  } as const;
+
+  type ToastType = keyof typeof VARIANTS;
+
+  function showToast(message: string, type: ToastType = 'info') {
+    const container = document.getElementById('toast-container');
+    const template = document.getElementById('toast-template') as HTMLTemplateElement | null;
+    if (!container || !template) return;
+
+    const variant = VARIANTS[type] || VARIANTS.info;
+    const clone = template.content.cloneNode(true) as DocumentFragment;
+    const item = clone.querySelector('.toast-item') as HTMLElement;
+    if (!item) return;
+
+    // Apply variant styles
+    item.classList.add(...variant.classes.split(' '));
+
+    // Show correct icon
+    const icon = item.querySelector(`.${variant.icon}`) as HTMLElement | null;
+    if (icon) icon.classList.remove('hidden');
+
+    // Set message
+    const msg = item.querySelector('.toast-message');
+    if (msg) msg.textContent = message;
+
+    // Close button
+    const closeBtn = item.querySelector('.toast-close');
+    closeBtn?.addEventListener('click', () => dismiss(item));
+
+    container.appendChild(item);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      item.classList.remove('opacity-0', 'translate-x-4');
+      item.classList.add('opacity-100', 'translate-x-0');
+    });
+
+    // Auto-dismiss after 5s
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => dismiss(item), 5000);
+
+    function dismiss(el: HTMLElement) {
+      if (!el.parentNode) return;
+      if (prefersReduced) {
+        el.remove();
+        return;
+      }
+      el.classList.remove('opacity-100', 'translate-x-0');
+      el.classList.add('opacity-0', 'translate-x-4');
+      el.addEventListener('transitionend', () => el.remove(), { once: true });
+      // Fallback removal if transitionend doesn't fire
+      setTimeout(() => el.remove(), 350);
+    }
+  }
+
+  // Expose globally
+  (window as any).showToast = showToast;
+</script>

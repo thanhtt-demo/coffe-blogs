@@ -1,0 +1,1414 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import Toast from '~/components/admin/Toast.astro';
+import { Icon } from 'astro-icon/components';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('post');
+  return posts.map((post) => ({ params: { slug: post.id } }));
+}
+
+const { slug } = Astro.params;
+---
+
+<AdminLayout title="Chỉnh sửa bài viết">
+  <!-- Back link -->
+  <a
+    href={`/admin/articles/${slug}`}
+    class="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-200 cursor-pointer mb-6"
+  >
+    <Icon name="tabler:arrow-left" class="w-4 h-4" />
+    Quay lại chi tiết
+  </a>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="text-center text-zinc-400 text-sm py-12">
+    <Icon name="tabler:loader-2" class="w-5 h-5 inline-block animate-spin" />
+    <span class="ml-1.5">Đang tải...</span>
+  </div>
+
+  <!-- Error state -->
+  <div id="error-state" class="text-center py-16 hidden">
+    <p class="text-red-500 text-sm" id="error-message">Không tìm thấy bài viết</p>
+    <a
+      href="/admin/articles"
+      class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-700 transition-colors duration-200 cursor-pointer font-medium"
+    >
+      ← Quay lại danh sách
+    </a>
+  </div>
+
+  <!-- Editor (hidden until loaded) -->
+  <div id="editor-container" class="hidden space-y-6">
+    <!-- Page title -->
+    <h1 id="page-title" class="text-2xl font-bold text-zinc-900"></h1>
+
+    <!-- Metadata card -->
+    <div class="bg-white border border-zinc-200 rounded-lg p-6">
+      <h2 class="text-lg font-semibold text-zinc-900 mb-4">Metadata</h2>
+      <div class="space-y-4">
+        <!-- Title -->
+        <div>
+          <label for="field-title" class="block text-sm font-medium text-zinc-700 mb-1">
+            Tiêu đề <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="field-title"
+            type="text"
+            required
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+            placeholder="Tiêu đề bài viết"
+          />
+          <p id="error-title" class="text-red-500 text-xs mt-1 hidden">Vui lòng nhập tiêu đề</p>
+        </div>
+
+        <!-- Excerpt -->
+        <div>
+          <label for="field-excerpt" class="block text-sm font-medium text-zinc-700 mb-1">
+            Mô tả ngắn (excerpt) <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            id="field-excerpt"
+            rows="2"
+            required
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+            placeholder="Mô tả ngắn về bài viết"></textarea>
+          <p id="error-excerpt" class="text-red-500 text-xs mt-1 hidden">Vui lòng nhập mô tả ngắn</p>
+        </div>
+
+        <!-- Category + PublishDate row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="field-category" class="block text-sm font-medium text-zinc-700 mb-1"> Danh mục </label>
+            <select
+              id="field-category"
+              class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none appearance-none bg-white"
+            >
+              <option value="">-- Chọn danh mục --</option>
+              <option value="nguon-goc">Nguồn gốc</option>
+              <option value="rang-xay">Rang xay</option>
+              <option value="pha-che">Pha chế</option>
+              <option value="nghien-cuu">Nghiên cứu</option>
+              <option value="che-bien">Chế biến</option>
+            </select>
+          </div>
+          <div>
+            <label for="field-date" class="block text-sm font-medium text-zinc-700 mb-1">
+              Ngày xuất bản <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="field-date"
+              type="date"
+              required
+              class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            />
+            <p id="error-date" class="text-red-500 text-xs mt-1 hidden">Vui lòng chọn ngày xuất bản</p>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label for="field-tags" class="block text-sm font-medium text-zinc-700 mb-1">
+            Tags (phân cách bằng dấu phẩy)
+          </label>
+          <input
+            id="field-tags"
+            type="text"
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+            placeholder="tag-1, tag-2, tag-3"
+          />
+        </div>
+
+        <!-- Author -->
+        <div>
+          <label for="field-author" class="block text-sm font-medium text-zinc-700 mb-1"> Tác giả </label>
+          <input
+            id="field-author"
+            type="text"
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none placeholder:text-zinc-400"
+            placeholder="Ba Tê"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Content editor card -->
+    <div class="bg-white border border-zinc-200 rounded-lg p-6">
+      <h2 class="text-lg font-semibold text-zinc-900 mb-4">Nội dung</h2>
+
+      <!-- Tab switch -->
+      <div class="flex border-b border-zinc-200 mb-4">
+        <button
+          id="tab-edit"
+          type="button"
+          class="px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 cursor-pointer transition-colors duration-200"
+        >
+          Soạn thảo
+        </button>
+        <button
+          id="tab-preview"
+          type="button"
+          class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 cursor-pointer transition-colors duration-200"
+        >
+          Xem trước
+        </button>
+      </div>
+
+      <!-- Edit pane -->
+      <div id="pane-edit">
+        <div class="relative">
+          <div
+            id="comment-overlay"
+            class="absolute inset-0 overflow-auto rounded-md"
+            aria-hidden="true"
+            style="pointer-events: none; z-index: 0; background: white;"
+          >
+          </div>
+          <textarea
+            id="field-content"
+            class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none min-h-[400px] resize-y placeholder:text-zinc-400"
+            style="position: relative; z-index: 1; background: transparent;"
+            placeholder="Nội dung Markdown..."></textarea>
+        </div>
+      </div>
+
+      <!-- Diff View -->
+      <div id="diff-view" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-zinc-900">Xem trước thay đổi</h3>
+          <div class="flex gap-2">
+            <button
+              id="diff-reject"
+              type="button"
+              class="bg-white text-zinc-700 border border-zinc-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors duration-200 cursor-pointer"
+            >
+              Từ chối
+            </button>
+            <button
+              id="diff-accept"
+              type="button"
+              class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
+            >
+              Chấp nhận
+            </button>
+          </div>
+        </div>
+        <div
+          id="diff-content"
+          class="font-mono text-sm overflow-auto max-h-[600px] border border-zinc-200 rounded-md p-3"
+        >
+        </div>
+      </div>
+
+      <!-- Preview pane -->
+      <div id="pane-preview" class="hidden">
+        <div id="content-preview" class="prose prose-lg max-w-none border border-zinc-200 rounded-md p-4 min-h-[400px]">
+          <p class="text-zinc-400 text-sm italic">Chưa có nội dung để xem trước</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comment List Panel -->
+    <div id="comment-list-panel" class="bg-white border border-zinc-200 rounded-lg p-4">
+      <h3 class="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+        <Icon name="tabler:message" class="w-4 h-4" />
+        Comments
+        <span id="comment-count-badge" class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium"
+          >0</span
+        >
+      </h3>
+      <div id="comment-list-items" class="space-y-2">
+        <p id="comment-list-empty" class="text-zinc-400 text-sm italic">
+          Bôi đen văn bản trong editor để thêm comment chỉnh sửa
+        </p>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex items-center justify-between">
+      <a
+        id="btn-cancel"
+        href={`/admin/articles/${slug}`}
+        class="bg-white text-zinc-700 border border-zinc-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors duration-200 cursor-pointer"
+      >
+        Hủy
+      </a>
+      <div class="flex items-center gap-2">
+        <button
+          id="btn-rewrite"
+          type="button"
+          disabled
+          class="inline-flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Icon name="tabler:sparkles" class="w-4 h-4" id="rewrite-icon" />
+          Rewrite
+          <span id="rewrite-count" class="bg-white/20 px-1.5 py-0.5 rounded text-xs">0</span>
+        </button>
+        <button
+          id="btn-save"
+          type="button"
+          class="inline-flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <Icon name="tabler:device-floppy" class="w-4 h-4" />
+          Lưu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment Popover -->
+  <div id="comment-popover" class="hidden absolute z-30 bg-white border border-zinc-200 rounded-lg p-4 shadow-lg w-80">
+    <p class="text-xs text-zinc-500 mb-2 truncate" id="popover-selected-text"></p>
+    <textarea
+      id="popover-comment-input"
+      class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none"
+      rows="3"
+      placeholder="Nhập chỉ dẫn chỉnh sửa..."></textarea>
+    <p id="popover-error" class="text-red-500 text-xs mt-1 hidden">Vui lòng nhập comment</p>
+    <div class="flex justify-end gap-2 mt-3">
+      <button
+        id="popover-cancel"
+        type="button"
+        class="text-zinc-600 px-3 py-1.5 rounded-md hover:bg-zinc-100 transition-colors duration-200 cursor-pointer text-sm"
+      >
+        Hủy
+      </button>
+      <button
+        id="popover-add"
+        type="button"
+        class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
+      >
+        Thêm comment
+      </button>
+    </div>
+  </div>
+
+  <Toast />
+</AdminLayout>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    .transition-colors,
+    .transition-all {
+      transition-duration: 0ms !important;
+    }
+    .animate-spin {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script is:inline>
+  var API_BASE = 'http://localhost:8000';
+
+  // ── Auth helpers ──────────────────────────────────────────
+  function getApiKey() {
+    return sessionStorage.getItem('apiKey');
+  }
+  function authHeaders() {
+    return { Authorization: 'Bearer ' + getApiKey(), 'Content-Type': 'application/json' };
+  }
+  function handleUnauth() {
+    sessionStorage.removeItem('apiKey');
+    window.location.href = '/admin/login';
+  }
+
+  // ── Slug from URL ─────────────────────────────────────────
+  function getSlugFromUrl() {
+    // URL pattern: /admin/articles/{slug}/edit
+    var parts = window.location.pathname.replace(/\/$/, '').split('/');
+    // parts: ['', 'admin', 'articles', '{slug}', 'edit']
+    return parts[parts.length - 2];
+  }
+
+  // ── DOM refs ──────────────────────────────────────────────
+  var loadingState = document.getElementById('loading-state');
+  var errorState = document.getElementById('error-state');
+  var errorMessage = document.getElementById('error-message');
+  var editorContainer = document.getElementById('editor-container');
+  var pageTitle = document.getElementById('page-title');
+
+  var fieldTitle = document.getElementById('field-title');
+  var fieldExcerpt = document.getElementById('field-excerpt');
+  var fieldCategory = document.getElementById('field-category');
+  var fieldDate = document.getElementById('field-date');
+  var fieldTags = document.getElementById('field-tags');
+  var fieldAuthor = document.getElementById('field-author');
+  var fieldContent = document.getElementById('field-content');
+
+  var errorTitle = document.getElementById('error-title');
+  var errorExcerpt = document.getElementById('error-excerpt');
+  var errorDate = document.getElementById('error-date');
+
+  var tabEdit = document.getElementById('tab-edit');
+  var tabPreview = document.getElementById('tab-preview');
+  var paneEdit = document.getElementById('pane-edit');
+  var panePreview = document.getElementById('pane-preview');
+  var contentPreview = document.getElementById('content-preview');
+
+  var btnSave = document.getElementById('btn-save');
+
+  var currentArticle = null;
+
+  // ── Comment State Manager ─────────────────────────────────
+  var CommentState = (function () {
+    var comments = [];
+    var _isRewriting = false;
+    var _diffResult = null;
+    var _onStateChange = null;
+
+    function notify() {
+      if (typeof _onStateChange === 'function') _onStateChange();
+    }
+
+    function addComment(selectedText, startOffset, endOffset, comment) {
+      if (!selectedText || !selectedText.trim()) return null;
+      if (!comment || !comment.trim()) return null;
+      var item = {
+        id: crypto.randomUUID(),
+        selectedText: selectedText,
+        startOffset: startOffset,
+        endOffset: endOffset,
+        comment: comment,
+      };
+      comments.push(item);
+      notify();
+      return item;
+    }
+
+    function removeComment(id) {
+      comments = comments.filter(function (c) {
+        return c.id !== id;
+      });
+      notify();
+    }
+
+    function getComments() {
+      return comments.slice();
+    }
+
+    function getCount() {
+      return comments.length;
+    }
+
+    function updateOffsets(oldContent, newContent) {
+      var removed = [];
+      // Find the first character where old and new differ
+      var minLen = Math.min(oldContent.length, newContent.length);
+      var changeStart = 0;
+      while (changeStart < minLen && oldContent[changeStart] === newContent[changeStart]) {
+        changeStart++;
+      }
+      // Find the last character where old and new differ (from the end)
+      var oldEnd = oldContent.length;
+      var newEnd = newContent.length;
+      while (oldEnd > changeStart && newEnd > changeStart && oldContent[oldEnd - 1] === newContent[newEnd - 1]) {
+        oldEnd--;
+        newEnd--;
+      }
+      var oldChangeEnd = oldEnd;
+      var delta = newEnd - oldEnd;
+
+      var surviving = [];
+      for (var i = 0; i < comments.length; i++) {
+        var c = comments[i];
+        var s = c.startOffset;
+        var e = c.endOffset;
+
+        // If the change is entirely before the comment region, shift both offsets
+        if (oldChangeEnd <= s) {
+          c.startOffset = s + delta;
+          c.endOffset = e + delta;
+          surviving.push(c);
+        }
+        // If the change is entirely after the comment region, no shift needed
+        else if (changeStart >= e) {
+          surviving.push(c);
+        }
+        // The change overlaps with the comment region
+        else {
+          // Adjust start: if change starts before comment start, clamp to changeStart
+          var newStart = s;
+          if (changeStart < s) {
+            newStart = Math.max(changeStart, s + delta);
+          }
+          // Adjust end: if change extends past or into comment end
+          var newEndOffset = e;
+          if (oldChangeEnd >= e) {
+            // The deleted region covers the end of the comment
+            newEndOffset = newEnd;
+          } else {
+            newEndOffset = e + delta;
+          }
+
+          if (newStart >= newEndOffset) {
+            // Region completely deleted
+            removed.push(c);
+          } else {
+            c.startOffset = newStart;
+            c.endOffset = newEndOffset;
+            surviving.push(c);
+          }
+        }
+      }
+
+      comments = surviving;
+      if (removed.length > 0 || delta !== 0) {
+        notify();
+      }
+      return removed;
+    }
+
+    function clear() {
+      comments = [];
+      _diffResult = null;
+      notify();
+    }
+
+    function setRewriting(bool) {
+      _isRewriting = !!bool;
+      notify();
+    }
+
+    function isRewriting() {
+      return _isRewriting;
+    }
+
+    function setDiffResult(result) {
+      _diffResult = result || null;
+      notify();
+    }
+
+    function getDiffResult() {
+      return _diffResult;
+    }
+
+    function setOnStateChange(fn) {
+      _onStateChange = fn;
+    }
+
+    return {
+      addComment: addComment,
+      removeComment: removeComment,
+      getComments: getComments,
+      getCount: getCount,
+      updateOffsets: updateOffsets,
+      clear: clear,
+      setRewriting: setRewriting,
+      isRewriting: isRewriting,
+      setDiffResult: setDiffResult,
+      getDiffResult: getDiffResult,
+      setOnStateChange: setOnStateChange,
+    };
+  })();
+
+  // ── Selection Handler ─────────────────────────────────────
+  function getPopoverPosition(textarea, selectionStart) {
+    var rect = textarea.getBoundingClientRect();
+    var textBefore = textarea.value.substring(0, selectionStart);
+    var lines = textBefore.split('\n');
+    var lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+    var lineIndex = lines.length - 1;
+    var topOffset = lineIndex * lineHeight - textarea.scrollTop;
+    return {
+      top: rect.top + window.scrollY + Math.min(topOffset + lineHeight + 8, rect.height),
+      left: rect.left + window.scrollX + 16,
+    };
+  }
+
+  fieldContent.addEventListener('mouseup', function () {
+    var start = fieldContent.selectionStart;
+    var end = fieldContent.selectionEnd;
+    if (start === end) return;
+
+    var selectedText = fieldContent.value.substring(start, end);
+    if (!selectedText.trim()) return;
+
+    var position = getPopoverPosition(fieldContent, start);
+    showCommentPopover(selectedText, start, end, position);
+  });
+
+  // ── Preview Selection Handler ─────────────────────────────
+  contentPreview.addEventListener('mouseup', function () {
+    var sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+
+    var selectedText = sel.toString();
+    if (!selectedText.trim()) return;
+
+    // Find this text in the raw markdown content
+    var content = fieldContent.value;
+    var searchText = selectedText.trim();
+    var startOffset = content.indexOf(searchText);
+
+    // If exact match not found, try shorter substring (first 40 chars)
+    if (startOffset === -1 && searchText.length > 40) {
+      var shorter = searchText.substring(0, 40);
+      startOffset = content.indexOf(shorter);
+      if (startOffset !== -1) {
+        // Extend to full length if possible
+        var endCandidate = startOffset + searchText.length;
+        if (endCandidate <= content.length) {
+          searchText = content.substring(startOffset, endCandidate);
+        }
+      }
+    }
+
+    if (startOffset === -1) {
+      window.showToast('Không tìm thấy đoạn văn bản trong nội dung gốc', 'info');
+      return;
+    }
+
+    var endOffset = startOffset + searchText.length;
+
+    // Position popover near the selection in preview
+    var range = sel.getRangeAt(0);
+    var rect = range.getBoundingClientRect();
+    var position = {
+      top: rect.bottom + window.scrollY + 8,
+      left: rect.left + window.scrollX,
+    };
+
+    showCommentPopover(searchText, startOffset, endOffset, position);
+    sel.removeAllRanges();
+  });
+
+  // ── Comment Popover Logic ─────────────────────────────────
+  var commentPopover = document.getElementById('comment-popover');
+  var popoverSelectedText = document.getElementById('popover-selected-text');
+  var popoverCommentInput = document.getElementById('popover-comment-input');
+  var popoverError = document.getElementById('popover-error');
+  var popoverCancel = document.getElementById('popover-cancel');
+  var popoverAdd = document.getElementById('popover-add');
+
+  var _popoverSelection = null; // { selectedText, startOffset, endOffset }
+
+  function showCommentPopover(selectedText, startOffset, endOffset, position) {
+    _popoverSelection = { selectedText: selectedText, startOffset: startOffset, endOffset: endOffset };
+
+    // Display truncated selected text (max 60 chars)
+    var displayText = selectedText.length > 60 ? selectedText.substring(0, 60) + '...' : selectedText;
+    popoverSelectedText.textContent = '"' + displayText + '"';
+
+    // Clear input and error
+    popoverCommentInput.value = '';
+    popoverError.classList.add('hidden');
+
+    // Check if mobile viewport
+    if (window.innerWidth < 640) {
+      commentPopover.style.position = 'fixed';
+      commentPopover.style.top = 'auto';
+      commentPopover.style.bottom = '0';
+      commentPopover.style.left = '0';
+      commentPopover.style.right = '0';
+      commentPopover.style.width = '100%';
+      commentPopover.style.borderRadius = '0.5rem 0.5rem 0 0';
+      commentPopover.style.zIndex = '50';
+    } else {
+      commentPopover.style.position = 'absolute';
+      commentPopover.style.bottom = '';
+      commentPopover.style.right = '';
+      commentPopover.style.width = '';
+      commentPopover.style.borderRadius = '';
+      commentPopover.style.zIndex = '';
+      commentPopover.style.top = position.top + 'px';
+      commentPopover.style.left = position.left + 'px';
+    }
+
+    // Show popover
+    commentPopover.classList.remove('hidden');
+
+    // Focus comment input
+    popoverCommentInput.focus();
+  }
+
+  function hideCommentPopover() {
+    commentPopover.classList.add('hidden');
+    _popoverSelection = null;
+  }
+
+  // "Thêm comment" button click handler
+  popoverAdd.addEventListener('click', function () {
+    var comment = popoverCommentInput.value.trim();
+    if (!comment) {
+      popoverError.classList.remove('hidden');
+      return;
+    }
+    CommentState.addComment(
+      _popoverSelection.selectedText,
+      _popoverSelection.startOffset,
+      _popoverSelection.endOffset,
+      comment
+    );
+    hideCommentPopover();
+  });
+
+  // "Hủy" button click handler
+  popoverCancel.addEventListener('click', function () {
+    hideCommentPopover();
+  });
+
+  // Close when clicking outside popover and outside textarea/preview
+  document.addEventListener('mousedown', function (e) {
+    if (commentPopover.classList.contains('hidden')) return;
+    if (commentPopover.contains(e.target)) return;
+    if (fieldContent.contains(e.target)) return;
+    if (contentPreview.contains(e.target)) return;
+    hideCommentPopover();
+  });
+
+  // Escape key handler
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !commentPopover.classList.contains('hidden')) {
+      hideCommentPopover();
+    }
+  });
+
+  // Clear error on input in comment textarea
+  popoverCommentInput.addEventListener('input', function () {
+    popoverError.classList.add('hidden');
+  });
+
+  // ── Overlay setup & scroll sync ────────────────────────
+  var commentOverlay = document.getElementById('comment-overlay');
+
+  function syncOverlayStyles() {
+    var cs = getComputedStyle(fieldContent);
+    var props = [
+      'fontFamily',
+      'fontSize',
+      'fontWeight',
+      'lineHeight',
+      'letterSpacing',
+      'wordSpacing',
+      'textIndent',
+      'whiteSpace',
+      'wordWrap',
+      'overflowWrap',
+      'padding',
+      'paddingTop',
+      'paddingRight',
+      'paddingBottom',
+      'paddingLeft',
+      'borderWidth',
+      'boxSizing',
+      'width',
+    ];
+    for (var i = 0; i < props.length; i++) {
+      commentOverlay.style[props[i]] = cs[props[i]];
+    }
+    commentOverlay.style.whiteSpace = 'pre-wrap';
+    commentOverlay.style.wordWrap = 'break-word';
+    commentOverlay.style.overflowWrap = 'break-word';
+    commentOverlay.style.color = 'transparent';
+    commentOverlay.style.height = fieldContent.offsetHeight + 'px';
+  }
+
+  // Sync on load and resize
+  syncOverlayStyles();
+  window.addEventListener('resize', syncOverlayStyles);
+  new ResizeObserver(syncOverlayStyles).observe(fieldContent);
+
+  fieldContent.addEventListener('scroll', function () {
+    commentOverlay.scrollTop = fieldContent.scrollTop;
+  });
+
+  // ── Render Comment Markers ──────────────────────────────
+  function renderCommentMarkers() {
+    var comments = CommentState.getComments();
+    var content = fieldContent.value;
+
+    if (comments.length === 0) {
+      commentOverlay.innerHTML = '';
+      return;
+    }
+
+    // Sort comments by startOffset to process in order
+    var sorted = comments.slice().sort(function (a, b) {
+      return a.startOffset - b.startOffset;
+    });
+
+    // Build HTML with markers
+    var html = '';
+    var lastIndex = 0;
+
+    for (var i = 0; i < sorted.length; i++) {
+      var c = sorted[i];
+      var commentIndex = comments.indexOf(c) + 1; // 1-based index in original order
+
+      // Add text before this marker
+      if (c.startOffset > lastIndex) {
+        html += escapeHtml(content.substring(lastIndex, c.startOffset));
+      }
+
+      // Add marked region with badge and tooltip
+      var markedText = escapeHtml(content.substring(c.startOffset, c.endOffset));
+      var tooltipText = escapeAttr(c.comment);
+      html +=
+        '<mark class="bg-blue-100/60 relative" style="pointer-events: auto; cursor: pointer;" title="' +
+        tooltipText +
+        '">';
+      html +=
+        '<span class="absolute -top-2 -left-1 inline-flex items-center justify-center w-4 h-4 bg-blue-500 text-white rounded-full text-[10px] font-medium pointer-events-none">' +
+        commentIndex +
+        '</span>';
+      html += markedText;
+      html += '</mark>';
+
+      lastIndex = c.endOffset;
+    }
+
+    // Add remaining text after last marker
+    if (lastIndex < content.length) {
+      html += escapeHtml(content.substring(lastIndex));
+    }
+
+    commentOverlay.innerHTML = html;
+  }
+
+  function escapeHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function escapeAttr(text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // ── Render Preview Highlights ─────────────────────────────
+  function renderPreviewHighlights() {
+    if (panePreview.classList.contains('hidden')) return;
+
+    var comments = CommentState.getComments();
+
+    // Re-render preview from scratch to clear old highlights
+    var md = fieldContent.value.trim();
+    if (md && typeof marked !== 'undefined') {
+      contentPreview.innerHTML = marked.parse(md);
+    } else if (md) {
+      contentPreview.textContent = md;
+    }
+
+    if (comments.length === 0) return;
+
+    // For each comment, find its selectedText in the preview DOM and wrap with <mark>
+    for (var i = 0; i < comments.length; i++) {
+      var c = comments[i];
+      var commentIndex = i + 1;
+      // Strip markdown formatting to get plain text for matching
+      var searchText = c.selectedText.replace(/[_*~`#\[\]]/g, '');
+      if (!searchText.trim()) continue;
+      _highlightTextInNode(contentPreview, searchText, commentIndex, c.comment);
+    }
+  }
+
+  function _highlightTextInNode(root, searchText, badgeNum, tooltipText) {
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    var nodesToProcess = [];
+    var node;
+
+    // Collect all text nodes
+    while ((node = walker.nextNode())) {
+      nodesToProcess.push(node);
+    }
+
+    // Try to find searchText across text nodes
+    var fullText = '';
+    var nodeMap = []; // { node, startInFull, endInFull }
+    for (var i = 0; i < nodesToProcess.length; i++) {
+      var n = nodesToProcess[i];
+      var start = fullText.length;
+      fullText += n.textContent;
+      nodeMap.push({ node: n, start: start, end: fullText.length });
+    }
+
+    var idx = fullText.indexOf(searchText);
+    if (idx === -1) {
+      // Try with trimmed/normalized whitespace
+      var normalized = searchText.replace(/\s+/g, ' ').trim();
+      var normalizedFull = fullText.replace(/\s+/g, ' ');
+      var nIdx = normalizedFull.indexOf(normalized);
+      if (nIdx === -1) return;
+      // Map back to original position (approximate)
+      idx = nIdx;
+    }
+
+    var endIdx = idx + searchText.length;
+
+    // Find which text nodes contain the match
+    for (var i = 0; i < nodeMap.length; i++) {
+      var nm = nodeMap[i];
+      if (nm.end <= idx) continue;
+      if (nm.start >= endIdx) break;
+
+      var textNode = nm.node;
+      var localStart = Math.max(0, idx - nm.start);
+      var localEnd = Math.min(textNode.textContent.length, endIdx - nm.start);
+
+      if (localStart >= localEnd) continue;
+
+      // Split text node and wrap matched part
+      var before = textNode.textContent.substring(0, localStart);
+      var matched = textNode.textContent.substring(localStart, localEnd);
+      var after = textNode.textContent.substring(localEnd);
+
+      var mark = document.createElement('mark');
+      mark.className = 'bg-blue-100 relative inline';
+      mark.style.cssText = 'padding: 1px 2px; border-radius: 2px;';
+      mark.title = tooltipText;
+      mark.textContent = matched;
+
+      // Add badge on first node only
+      if (nm.start <= idx) {
+        var badge = document.createElement('span');
+        badge.className =
+          'inline-flex items-center justify-center w-4 h-4 bg-blue-500 text-white rounded-full text-[10px] font-medium align-top';
+        badge.style.cssText = 'font-size: 10px; line-height: 16px; display: inline-flex; margin-right: 2px;';
+        badge.textContent = badgeNum;
+        mark.insertBefore(badge, mark.firstChild);
+      }
+
+      var parent = textNode.parentNode;
+      var frag = document.createDocumentFragment();
+      if (before) frag.appendChild(document.createTextNode(before));
+      frag.appendChild(mark);
+      if (after) frag.appendChild(document.createTextNode(after));
+      parent.replaceChild(frag, textNode);
+
+      break; // Only highlight first occurrence
+    }
+  }
+
+  // ── Comment List Rendering ──────────────────────────────
+  var commentListPanel = document.getElementById('comment-list-panel');
+  var commentCountBadge = document.getElementById('comment-count-badge');
+  var commentListItems = document.getElementById('comment-list-items');
+  var commentListEmpty = document.getElementById('comment-list-empty');
+
+  function renderCommentList() {
+    var comments = CommentState.getComments();
+    var count = comments.length;
+
+    // Update badge
+    commentCountBadge.textContent = count;
+
+    // Clear items (keep empty state element)
+    commentListItems.innerHTML = '';
+
+    if (count === 0) {
+      commentListItems.appendChild(commentListEmpty);
+      commentListEmpty.classList.remove('hidden');
+      return;
+    }
+
+    for (var i = 0; i < comments.length; i++) {
+      (function (c, index) {
+        var displayText = c.selectedText.length > 60 ? c.selectedText.substring(0, 60) + '...' : c.selectedText;
+
+        var item = document.createElement('div');
+        item.className =
+          'border border-zinc-200 rounded-md p-3 hover:border-zinc-300 transition-colors duration-200 cursor-pointer';
+        item.setAttribute('data-comment-id', c.id);
+
+        item.innerHTML =
+          '<div class="flex items-start justify-between gap-2">' +
+          '<div class="flex-1 min-w-0">' +
+          '<span class="inline-flex items-center justify-center w-5 h-5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium mr-1.5">' +
+          (index + 1) +
+          '</span>' +
+          '<span class="text-xs text-zinc-500">"' +
+          escapeHtml(displayText) +
+          '"</span>' +
+          '</div>' +
+          '<button class="comment-delete-btn shrink-0 text-zinc-400 hover:text-red-500 transition-colors duration-200 cursor-pointer" type="button" title="Xóa comment">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>' +
+          '</button>' +
+          '</div>' +
+          '<p class="text-sm text-zinc-700 mt-1.5 pl-6.5">' +
+          escapeHtml(c.comment) +
+          '</p>';
+
+        // Click on item: scroll textarea to text position
+        item.addEventListener('click', function (e) {
+          if (e.target.closest('.comment-delete-btn')) return;
+          fieldContent.focus();
+          fieldContent.setSelectionRange(c.startOffset, c.endOffset);
+          fieldContent.scrollTop = getScrollTopForOffset(fieldContent, c.startOffset);
+        });
+
+        // Delete button
+        var deleteBtn = item.querySelector('.comment-delete-btn');
+        deleteBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          CommentState.removeComment(c.id);
+        });
+
+        commentListItems.appendChild(item);
+      })(comments[i], i);
+    }
+  }
+
+  function getScrollTopForOffset(textarea, offset) {
+    var textBefore = textarea.value.substring(0, offset);
+    var lines = textBefore.split('\n');
+    var lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+    var targetTop = (lines.length - 1) * lineHeight;
+    return Math.max(0, targetTop - textarea.clientHeight / 2);
+  }
+
+  // ── Rewrite Button ──────────────────────────────────────
+  var btnRewrite = document.getElementById('btn-rewrite');
+  var rewriteCount = document.getElementById('rewrite-count');
+
+  function updateRewriteButton() {
+    var count = CommentState.getCount();
+    rewriteCount.textContent = count;
+
+    if (CommentState.isRewriting()) {
+      btnRewrite.disabled = true;
+      btnRewrite.classList.add('opacity-50');
+      return;
+    }
+
+    if (count > 0) {
+      btnRewrite.disabled = false;
+      btnRewrite.classList.remove('opacity-50');
+    } else {
+      btnRewrite.disabled = true;
+      btnRewrite.classList.add('opacity-50');
+    }
+  }
+
+  // ── Rewrite API Client ──────────────────────────────────
+  async function callRewriteAPI() {
+    var slug = getSlugFromUrl();
+    var comments = CommentState.getComments();
+    var fullContent = fieldContent.value;
+
+    // Set loading state
+    CommentState.setRewriting(true);
+    fieldContent.disabled = true;
+    hideCommentPopover();
+
+    try {
+      var res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug) + '/rewrite', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          comments: comments.map(function (c) {
+            return { selected_text: c.selectedText, comment: c.comment };
+          }),
+          full_content: fullContent,
+        }),
+      });
+
+      if (res.status === 401) {
+        handleUnauth();
+        return;
+      }
+
+      var data = await res.json();
+
+      if (!res.ok) {
+        window.showToast(data.detail || 'Rewrite thất bại', 'error');
+        CommentState.setRewriting(false);
+        fieldContent.disabled = false;
+        return;
+      }
+
+      // Success — show diff view
+      CommentState.setDiffResult({
+        original: fullContent,
+        rewritten: data.rewritten_content,
+      });
+      CommentState.setRewriting(false);
+      // Don't re-enable textarea yet — diff view will handle that
+    } catch (e) {
+      window.showToast('Không thể kết nối tới server', 'error');
+      CommentState.setRewriting(false);
+      fieldContent.disabled = false;
+    }
+  }
+
+  // Rewrite button click handler
+  btnRewrite.addEventListener('click', function () {
+    if (CommentState.getCount() === 0 || CommentState.isRewriting()) return;
+    callRewriteAPI();
+  });
+
+  // ── Diff Algorithm (Line-by-line LCS) ───────────────────
+  function computeDiff(originalText, rewrittenText) {
+    var oldLines = originalText.split('\n');
+    var newLines = rewrittenText.split('\n');
+    var m = oldLines.length;
+    var n = newLines.length;
+
+    // Build LCS table
+    var dp = [];
+    for (var i = 0; i <= m; i++) {
+      dp[i] = [];
+      for (var j = 0; j <= n; j++) {
+        if (i === 0 || j === 0) {
+          dp[i][j] = 0;
+        } else if (oldLines[i - 1] === newLines[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    // Backtrack to build diff
+    var result = [];
+    var i = m;
+    var j = n;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+        result.unshift({ type: 'unchanged', text: oldLines[i - 1] });
+        i--;
+        j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        result.unshift({ type: 'added', text: newLines[j - 1] });
+        j--;
+      } else {
+        result.unshift({ type: 'removed', text: oldLines[i - 1] });
+        i--;
+      }
+    }
+
+    return result;
+  }
+
+  // ── Diff View Rendering ─────────────────────────────────
+  var diffView = document.getElementById('diff-view');
+  var diffContent = document.getElementById('diff-content');
+
+  function isPreviewActive() {
+    return !panePreview.classList.contains('hidden');
+  }
+
+  function renderDiffView() {
+    var result = CommentState.getDiffResult();
+
+    if (!result) {
+      diffView.classList.add('hidden');
+      // Only restore edit pane if we're on the edit tab
+      if (!isPreviewActive()) {
+        paneEdit.classList.remove('hidden');
+      }
+      return;
+    }
+
+    // Hide both panes, show diff view
+    paneEdit.classList.add('hidden');
+    panePreview.classList.add('hidden');
+    diffView.classList.remove('hidden');
+
+    // Compute diff
+    var diffLines = computeDiff(result.original, result.rewritten);
+
+    // Render diff lines
+    var html = '';
+    for (var i = 0; i < diffLines.length; i++) {
+      var line = diffLines[i];
+      var lineText = escapeHtml(line.text) || '&nbsp;';
+      if (line.type === 'removed') {
+        html += '<div class="bg-red-50 text-red-800 px-2 py-0.5">- ' + lineText + '</div>';
+      } else if (line.type === 'added') {
+        html += '<div class="bg-green-50 text-green-800 px-2 py-0.5">+ ' + lineText + '</div>';
+      } else {
+        html += '<div class="px-2 py-0.5 text-zinc-700">&nbsp; ' + lineText + '</div>';
+      }
+    }
+    diffContent.innerHTML = html;
+  }
+
+  // ── Diff Accept / Reject ────────────────────────────────
+  var diffAccept = document.getElementById('diff-accept');
+  var diffReject = document.getElementById('diff-reject');
+
+  diffAccept.addEventListener('click', function () {
+    var result = CommentState.getDiffResult();
+    if (!result) return;
+
+    // Replace textarea content with rewritten content
+    fieldContent.value = result.rewritten;
+    fieldContent.disabled = false;
+
+    // Clear all comments and diff result
+    CommentState.clear(); // This clears comments, diffResult, and triggers onStateChange
+  });
+
+  diffReject.addEventListener('click', function () {
+    // Keep textarea content unchanged, keep Comment List
+    fieldContent.disabled = false;
+
+    // Just clear the diff result (keeps comments intact)
+    CommentState.setDiffResult(null); // Triggers onStateChange which hides diff view
+  });
+
+  // ── Textarea Input Handler (Offset Tracking) ────────────
+  var _previousContent = '';
+
+  function initPreviousContent() {
+    _previousContent = fieldContent.value;
+  }
+
+  fieldContent.addEventListener('input', function () {
+    var newContent = fieldContent.value;
+    var removed = CommentState.updateOffsets(_previousContent, newContent);
+
+    if (removed.length > 0) {
+      window.showToast(removed.length + ' comment đã bị xóa do vùng văn bản bị xóa', 'info');
+    }
+
+    _previousContent = newContent;
+  });
+
+  // ── Wire up state change callback ───────────────────────
+  CommentState.setOnStateChange(function () {
+    renderCommentMarkers();
+    renderCommentList();
+    updateRewriteButton();
+    renderDiffView();
+    renderPreviewHighlights();
+  });
+
+  // ── Show error ────────────────────────────────────────────
+  function showError(msg) {
+    loadingState.classList.add('hidden');
+    errorMessage.textContent = msg;
+    errorState.classList.remove('hidden');
+  }
+
+  // ── Populate form ─────────────────────────────────────────
+  function populateForm(article) {
+    currentArticle = article;
+    var fm = article.frontmatter;
+
+    pageTitle.textContent = 'Chỉnh sửa: ' + (fm.title || '');
+
+    fieldTitle.value = fm.title || '';
+    fieldExcerpt.value = fm.excerpt || '';
+    fieldCategory.value = fm.category || '';
+    fieldAuthor.value = fm.author || 'Ba Tê';
+    fieldContent.value = article.content || '';
+
+    // Parse date for input[type=date] — expects YYYY-MM-DD
+    if (fm.publishDate) {
+      var d = new Date(fm.publishDate);
+      var yyyy = d.getFullYear();
+      var mm = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
+      fieldDate.value = yyyy + '-' + mm + '-' + dd;
+    }
+
+    // Tags: array → comma-separated string
+    if (fm.tags && fm.tags.length > 0) {
+      fieldTags.value = fm.tags.join(', ');
+    }
+
+    // Initialize previous content for offset tracking
+    initPreviousContent();
+
+    // Show editor, hide loading
+    loadingState.classList.add('hidden');
+    editorContainer.classList.remove('hidden');
+
+    // Sync overlay styles after content is loaded
+    syncOverlayStyles();
+  }
+
+  // ── Tab switching ─────────────────────────────────────────
+  tabEdit.addEventListener('click', function () {
+    tabEdit.classList.add('border-blue-600', 'text-blue-600');
+    tabEdit.classList.remove('border-transparent', 'text-zinc-500');
+    tabPreview.classList.remove('border-blue-600', 'text-blue-600');
+    tabPreview.classList.add('border-transparent', 'text-zinc-500');
+    paneEdit.classList.remove('hidden');
+    panePreview.classList.add('hidden');
+  });
+
+  tabPreview.addEventListener('click', function () {
+    tabPreview.classList.add('border-blue-600', 'text-blue-600');
+    tabPreview.classList.remove('border-transparent', 'text-zinc-500');
+    tabEdit.classList.remove('border-blue-600', 'text-blue-600');
+    tabEdit.classList.add('border-transparent', 'text-zinc-500');
+    panePreview.classList.remove('hidden');
+    paneEdit.classList.add('hidden');
+
+    // Render markdown preview
+    var md = fieldContent.value.trim();
+    if (md && typeof marked !== 'undefined') {
+      contentPreview.innerHTML = marked.parse(md);
+    } else if (md) {
+      contentPreview.textContent = md;
+    } else {
+      contentPreview.innerHTML = '<p class="text-zinc-400 text-sm italic">Chưa có nội dung để xem trước</p>';
+    }
+
+    // Highlight commented sections in preview
+    renderPreviewHighlights();
+  });
+
+  // ── Validation ────────────────────────────────────────────
+  function clearErrors() {
+    var fields = [fieldTitle, fieldExcerpt, fieldDate];
+    var errors = [errorTitle, errorExcerpt, errorDate];
+    for (var i = 0; i < fields.length; i++) {
+      fields[i].classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+      fields[i].classList.add('border-zinc-300');
+      errors[i].classList.add('hidden');
+    }
+  }
+
+  function setFieldError(field, errorEl) {
+    field.classList.remove('border-zinc-300');
+    field.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+    errorEl.classList.remove('hidden');
+  }
+
+  function validate() {
+    clearErrors();
+    var valid = true;
+    var firstError = null;
+
+    if (!fieldTitle.value.trim()) {
+      setFieldError(fieldTitle, errorTitle);
+      valid = false;
+      if (!firstError) firstError = fieldTitle;
+    }
+    if (!fieldExcerpt.value.trim()) {
+      setFieldError(fieldExcerpt, errorExcerpt);
+      valid = false;
+      if (!firstError) firstError = fieldExcerpt;
+    }
+    if (!fieldDate.value) {
+      setFieldError(fieldDate, errorDate);
+      valid = false;
+      if (!firstError) firstError = fieldDate;
+    }
+
+    if (!valid && firstError) {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstError.focus();
+    }
+
+    return valid;
+  }
+
+  // ── Save ──────────────────────────────────────────────────
+  btnSave.addEventListener('click', function () {
+    if (!validate()) return;
+
+    var slug = getSlugFromUrl();
+
+    // Build tags array from comma-separated string
+    var tagsStr = fieldTags.value.trim();
+    var tags = [];
+    if (tagsStr) {
+      tags = tagsStr
+        .split(',')
+        .map(function (t) {
+          return t.trim();
+        })
+        .filter(function (t) {
+          return t.length > 0;
+        });
+    }
+
+    // Build publishDate as ISO string
+    var dateVal = fieldDate.value; // YYYY-MM-DD
+    var publishDate = new Date(dateVal + 'T00:00:00Z').toISOString();
+
+    var payload = {
+      frontmatter: {
+        title: fieldTitle.value.trim(),
+        excerpt: fieldExcerpt.value.trim(),
+        category: fieldCategory.value || null,
+        publishDate: publishDate,
+        tags: tags,
+        author: fieldAuthor.value.trim() || 'Ba Tê',
+        draft: currentArticle ? currentArticle.frontmatter.draft : false,
+        image: currentArticle ? currentArticle.frontmatter.image : null,
+        imageSourceId: currentArticle ? currentArticle.frontmatter.imageSourceId : null,
+        references: currentArticle ? currentArticle.frontmatter.references : [],
+      },
+      content: fieldContent.value,
+    };
+
+    // Disable save button
+    btnSave.disabled = true;
+    btnSave.classList.add('opacity-50');
+
+    fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug), {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) {
+        if (res.status === 401) {
+          handleUnauth();
+          return;
+        }
+        return res.json().then(function (data) {
+          if (res.ok) {
+            window.showToast('Đã lưu thành công', 'success');
+            setTimeout(function () {
+              window.location.href = '/admin/articles/' + slug;
+            }, 1000);
+          } else {
+            window.showToast(data.detail || 'Lưu thất bại', 'error');
+            btnSave.disabled = false;
+            btnSave.classList.remove('opacity-50');
+          }
+        });
+      })
+      .catch(function () {
+        window.showToast('Không thể kết nối tới server', 'error');
+        btnSave.disabled = false;
+        btnSave.classList.remove('opacity-50');
+      });
+  });
+
+  // ── Fetch article ─────────────────────────────────────────
+  async function fetchArticle() {
+    var slug = getSlugFromUrl();
+    if (!slug) {
+      showError('Không tìm thấy slug bài viết');
+      return;
+    }
+
+    try {
+      var res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug));
+      if (res.status === 401) {
+        handleUnauth();
+        return;
+      }
+      if (res.status === 404) {
+        showError('Không tìm thấy bài viết: ' + slug);
+        return;
+      }
+      if (!res.ok) throw new Error('Fetch failed');
+
+      var article = await res.json();
+      populateForm(article);
+    } catch (e) {
+      showError('Không thể kết nối tới server');
+    }
+  }
+
+  // ── Auth guard + init ─────────────────────────────────────
+  if (!getApiKey()) {
+    window.location.href = '/admin/login';
+  } else {
+    fetchArticle();
+  }
+</script>

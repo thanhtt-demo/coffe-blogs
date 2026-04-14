@@ -1,0 +1,234 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import Toast from '~/components/admin/Toast.astro';
+import { Icon } from 'astro-icon/components';
+---
+
+<AdminLayout title="Bài viết">
+  <!-- Header: title with count + category filter -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h1 class="text-2xl font-bold text-zinc-900">
+      Bài viết (<span id="article-count">0</span>)
+    </h1>
+    <div class="flex items-center gap-2">
+      <label for="category-filter" class="sr-only">Lọc danh mục</label>
+      <select
+        id="category-filter"
+        class="w-full sm:w-auto px-3 py-2 border border-zinc-300 rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none appearance-none cursor-pointer bg-white pr-8"
+      >
+        <option value="">Tất cả</option>
+        <option value="nguon-goc">Nguồn gốc</option>
+        <option value="rang-xay">Rang xay</option>
+        <option value="pha-che">Pha chế</option>
+        <option value="nghien-cuu">Nghiên cứu</option>
+        <option value="che-bien">Chế biến</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="text-center text-zinc-400 text-sm py-12">
+    <Icon name="tabler:loader-2" class="w-5 h-5 inline-block animate-spin" />
+    <span class="ml-1.5">Đang tải...</span>
+  </div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="text-center py-16 hidden">
+    <p class="text-zinc-500 text-sm">
+      Chưa có bài viết nào.
+      <a
+        href="/admin"
+        class="text-blue-600 hover:text-blue-700 transition-colors duration-200 cursor-pointer font-medium"
+        >Tạo bài viết mới →</a
+      >
+    </p>
+  </div>
+
+  <!-- Table (desktop) -->
+  <div id="table-container" class="hidden md:block hidden">
+    <div class="w-full border border-zinc-200 rounded-lg overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-zinc-50">
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Tiêu đề</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Ngày tạo</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Danh mục</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Rows rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card list (mobile) -->
+  <div id="card-container" class="md:hidden hidden">
+    <div id="card-list" class="space-y-3">
+      <!-- Cards rendered by JS -->
+    </div>
+  </div>
+
+  <Toast />
+</AdminLayout>
+
+<script is:inline>
+  const API_BASE = 'http://localhost:8000';
+  const CATEGORY_MAP = {
+    'nguon-goc': 'Nguồn gốc',
+    'rang-xay': 'Rang xay',
+    'pha-che': 'Pha chế',
+    'nghien-cuu': 'Nghiên cứu',
+    'che-bien': 'Chế biến',
+  };
+
+  // State
+  let allArticles = [];
+
+  // DOM refs
+  const articleCount = document.getElementById('article-count');
+  const categoryFilter = document.getElementById('category-filter');
+  const loadingState = document.getElementById('loading-state');
+  const emptyState = document.getElementById('empty-state');
+  const tableContainer = document.getElementById('table-container');
+  const tableBody = document.getElementById('table-body');
+  const cardContainer = document.getElementById('card-container');
+  const cardList = document.getElementById('card-list');
+
+  // Auth
+  function getApiKey() {
+    return sessionStorage.getItem('apiKey');
+  }
+  function handleUnauth() {
+    sessionStorage.removeItem('apiKey');
+    window.location.href = '/admin/login';
+  }
+
+  // Helpers
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  function categoryBadge(slug) {
+    const name = CATEGORY_MAP[slug];
+    if (!name) return '';
+    return `<span class="bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full text-xs font-medium">${escapeHtml(name)}</span>`;
+  }
+
+  function statusBadge(draft) {
+    if (draft) {
+      return '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium">Draft</span>';
+    }
+    return '<span class="text-green-600 text-sm" aria-label="Đã xuất bản">✓</span>';
+  }
+
+  // Rendering
+  function renderTableRow(article) {
+    const fm = article.frontmatter;
+    return `<tr class="border-t border-zinc-200 hover:bg-zinc-50 transition-colors duration-200 cursor-pointer" data-slug="${escapeHtml(article.slug)}">
+      <td class="px-4 py-3 text-sm">
+        <a href="/admin/articles/${escapeHtml(article.slug)}" class="font-medium text-zinc-900 hover:text-blue-600 transition-colors duration-200">${escapeHtml(fm.title)}</a>
+      </td>
+      <td class="px-4 py-3 text-sm text-zinc-500">${formatDate(fm.publishDate)}</td>
+      <td class="px-4 py-3 text-sm">${categoryBadge(fm.category)}</td>
+      <td class="px-4 py-3 text-sm">${statusBadge(fm.draft)}</td>
+    </tr>`;
+  }
+
+  function renderCard(article) {
+    const fm = article.frontmatter;
+    return `<a href="/admin/articles/${escapeHtml(article.slug)}" class="block bg-white border border-zinc-200 rounded-lg p-4 hover:border-zinc-300 transition-colors duration-200 cursor-pointer">
+      <div class="flex items-start justify-between gap-3">
+        <h3 class="font-medium text-zinc-900 text-sm">${escapeHtml(fm.title)}</h3>
+        ${statusBadge(fm.draft)}
+      </div>
+      <div class="flex items-center gap-3 mt-2">
+        <span class="text-xs text-zinc-500">${formatDate(fm.publishDate)}</span>
+        ${categoryBadge(fm.category)}
+      </div>
+    </a>`;
+  }
+
+  function renderArticles(articles) {
+    articleCount.textContent = articles.length;
+
+    if (articles.length === 0) {
+      emptyState.classList.remove('hidden');
+      tableContainer.classList.add('hidden');
+      tableContainer.classList.remove('md:block');
+      cardContainer.classList.add('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+
+    // Table (desktop)
+    tableContainer.classList.remove('hidden');
+    tableContainer.classList.add('md:block');
+    tableBody.innerHTML = articles.map(renderTableRow).join('');
+
+    // Cards (mobile)
+    cardContainer.classList.remove('hidden');
+    cardList.innerHTML = articles.map(renderCard).join('');
+  }
+
+  function applyFilter() {
+    const selected = categoryFilter.value;
+    const filtered = selected ? allArticles.filter((a) => a.frontmatter.category === selected) : allArticles;
+    renderArticles(filtered);
+  }
+
+  // Row click → navigate
+  function handleRowClick(e) {
+    const row = e.target.closest('tr[data-slug]');
+    if (!row) return;
+    // Don't navigate if clicking the link itself (it handles its own navigation)
+    if (e.target.closest('a')) return;
+    window.location.href = `/admin/articles/${row.dataset.slug}`;
+  }
+
+  // API
+  async function fetchArticles() {
+    try {
+      const res = await fetch(`${API_BASE}/api/articles`);
+      if (res.status === 401) {
+        handleUnauth();
+        return;
+      }
+      if (!res.ok) throw new Error('Fetch failed');
+
+      allArticles = await res.json();
+
+      // Sort by publishDate descending
+      allArticles.sort((a, b) => new Date(b.frontmatter.publishDate) - new Date(a.frontmatter.publishDate));
+
+      loadingState.classList.add('hidden');
+      applyFilter();
+    } catch {
+      loadingState.innerHTML = '<span class="text-red-500 text-sm">Không thể kết nối tới server</span>';
+    }
+  }
+
+  // Events
+  categoryFilter.addEventListener('change', applyFilter);
+  tableBody.addEventListener('click', handleRowClick);
+
+  // Auth guard + init
+  if (!getApiKey()) {
+    window.location.href = '/admin/login';
+  } else {
+    fetchArticles();
+  }
+</script>

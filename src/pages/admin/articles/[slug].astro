@@ -1,0 +1,391 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro';
+import Toast from '~/components/admin/Toast.astro';
+import ConfirmDialog from '~/components/admin/ConfirmDialog.astro';
+import { Icon } from 'astro-icon/components';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('post');
+  return posts.map((post) => ({ params: { slug: post.id } }));
+}
+
+const { slug } = Astro.params;
+---
+
+<AdminLayout title="Chi tiết bài viết">
+  <!-- Back link -->
+  <a
+    href="/admin/articles"
+    class="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-200 cursor-pointer mb-6"
+  >
+    <Icon name="tabler:arrow-left" class="w-4 h-4" />
+    Quay lại danh sách
+  </a>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="text-center text-zinc-400 text-sm py-12">
+    <Icon name="tabler:loader-2" class="w-5 h-5 inline-block animate-spin" />
+    <span class="ml-1.5">Đang tải...</span>
+  </div>
+
+  <!-- Error state -->
+  <div id="error-state" class="text-center py-16 hidden">
+    <p class="text-red-500 text-sm" id="error-message">Không tìm thấy bài viết</p>
+    <a
+      href="/admin/articles"
+      class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-700 transition-colors duration-200 cursor-pointer font-medium"
+    >
+      ← Quay lại danh sách
+    </a>
+  </div>
+
+  <!-- Article detail (hidden until loaded) -->
+  <div id="article-detail" class="hidden space-y-6">
+    <!-- Metadata card -->
+    <div class="bg-white border border-zinc-200 rounded-lg p-6">
+      <h1 id="article-title" class="text-2xl font-bold text-zinc-900"></h1>
+
+      <!-- Metadata row -->
+      <div class="flex flex-wrap items-center gap-3 mt-3 text-sm text-zinc-500">
+        <span id="article-date"></span>
+        <span id="article-category"></span>
+        <span id="article-author"></span>
+        <span id="article-status"></span>
+      </div>
+
+      <!-- Tags -->
+      <div id="article-tags" class="flex flex-wrap gap-1.5 mt-3 hidden"></div>
+
+      <!-- Cover image -->
+      <div id="cover-container" class="mt-4 hidden">
+        <img id="article-cover" src="" alt="Ảnh bìa" class="max-h-48 rounded-lg object-cover" />
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex flex-wrap items-center gap-3 mt-6 pt-4 border-t border-zinc-200">
+        <a
+          id="btn-edit"
+          href="#"
+          class="inline-flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <Icon name="tabler:edit" class="w-4 h-4" />
+          Chỉnh sửa
+        </a>
+        <button
+          id="btn-publish"
+          type="button"
+          class="inline-flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hidden"
+        >
+          <Icon name="tabler:send" class="w-4 h-4" />
+          Xuất bản
+        </button>
+        <button
+          id="btn-delete"
+          type="button"
+          class="inline-flex items-center gap-1.5 bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          <Icon name="tabler:trash" class="w-4 h-4" />
+          Xóa
+        </button>
+      </div>
+    </div>
+
+    <!-- Rendered content -->
+    <div class="bg-white border border-zinc-200 rounded-lg p-6">
+      <h2 class="text-lg font-semibold text-zinc-900 mb-4">Nội dung</h2>
+      <div id="article-content" class="prose prose-lg max-w-none"></div>
+    </div>
+
+    <!-- References -->
+    <div id="references-section" class="bg-white border border-zinc-200 rounded-lg p-6 hidden">
+      <h2 class="text-lg font-semibold text-zinc-900 mb-4">Tham khảo</h2>
+      <ol id="references-list" class="list-decimal list-inside space-y-1.5 text-sm text-zinc-700"></ol>
+    </div>
+  </div>
+
+  <Toast />
+  <ConfirmDialog />
+</AdminLayout>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script is:inline>
+  const API_BASE = 'http://localhost:8000';
+  const CATEGORY_MAP = {
+    'nguon-goc': 'Nguồn gốc',
+    'rang-xay': 'Rang xay',
+    'pha-che': 'Pha chế',
+    'nghien-cuu': 'Nghiên cứu',
+    'che-bien': 'Chế biến',
+  };
+
+  // Extract slug from URL path: /admin/articles/{slug}
+  function getSlugFromUrl() {
+    const parts = window.location.pathname.replace(/\/$/, '').split('/');
+    return parts[parts.length - 1];
+  }
+
+  // Auth helpers
+  function getApiKey() {
+    return sessionStorage.getItem('apiKey');
+  }
+  function authHeaders() {
+    return { Authorization: 'Bearer ' + getApiKey(), 'Content-Type': 'application/json' };
+  }
+  function handleUnauth() {
+    sessionStorage.removeItem('apiKey');
+    window.location.href = '/admin/login';
+  }
+
+  // Helpers
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return dd + '/' + mm + '/' + yyyy;
+  }
+
+  // DOM refs
+  const loadingState = document.getElementById('loading-state');
+  const errorState = document.getElementById('error-state');
+  const errorMessage = document.getElementById('error-message');
+  const articleDetail = document.getElementById('article-detail');
+  const articleTitle = document.getElementById('article-title');
+  const articleDate = document.getElementById('article-date');
+  const articleCategory = document.getElementById('article-category');
+  const articleAuthor = document.getElementById('article-author');
+  const articleStatus = document.getElementById('article-status');
+  const articleTags = document.getElementById('article-tags');
+  const coverContainer = document.getElementById('cover-container');
+  const articleCover = document.getElementById('article-cover');
+  const btnEdit = document.getElementById('btn-edit');
+  const btnPublish = document.getElementById('btn-publish');
+  const btnDelete = document.getElementById('btn-delete');
+  const articleContent = document.getElementById('article-content');
+  const referencesSection = document.getElementById('references-section');
+  const referencesList = document.getElementById('references-list');
+
+  let currentArticle = null;
+
+  function showError(msg) {
+    loadingState.classList.add('hidden');
+    errorMessage.textContent = msg;
+    errorState.classList.remove('hidden');
+  }
+
+  function renderArticle(article) {
+    const fm = article.frontmatter;
+    currentArticle = article;
+
+    // Title
+    articleTitle.textContent = fm.title || 'Không có tiêu đề';
+
+    // Date
+    articleDate.textContent = formatDate(fm.publishDate);
+
+    // Category badge
+    const catName = CATEGORY_MAP[fm.category];
+    if (catName) {
+      articleCategory.innerHTML =
+        '<span class="bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full text-xs font-medium">' +
+        escapeHtml(catName) +
+        '</span>';
+    }
+
+    // Author
+    if (fm.author) {
+      articleAuthor.textContent = fm.author;
+    }
+
+    // Draft status
+    if (fm.draft) {
+      articleStatus.innerHTML =
+        '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium">Draft</span>';
+      btnPublish.classList.remove('hidden');
+    } else {
+      articleStatus.innerHTML =
+        '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">Đã xuất bản</span>';
+      btnPublish.classList.add('hidden');
+    }
+
+    // Tags
+    if (fm.tags && fm.tags.length > 0) {
+      articleTags.classList.remove('hidden');
+      articleTags.innerHTML = fm.tags
+        .map(function (tag) {
+          return (
+            '<span class="bg-zinc-100 text-zinc-700 rounded-full px-2 py-0.5 text-xs">' + escapeHtml(tag) + '</span>'
+          );
+        })
+        .join('');
+    }
+
+    // Cover image
+    if (fm.image) {
+      coverContainer.classList.remove('hidden');
+      articleCover.src = fm.image;
+      articleCover.alt = 'Ảnh bìa: ' + (fm.title || '');
+    }
+
+    // Edit link
+    btnEdit.href = '/admin/articles/' + article.slug + '/edit';
+
+    // Render markdown content
+    if (typeof marked !== 'undefined' && article.content) {
+      articleContent.innerHTML = marked.parse(article.content);
+    } else if (article.content) {
+      articleContent.innerHTML = '<pre class="whitespace-pre-wrap text-sm">' + escapeHtml(article.content) + '</pre>';
+    } else {
+      articleContent.innerHTML = '<p class="text-zinc-400 text-sm italic">Không có nội dung</p>';
+    }
+
+    // References
+    if (fm.references && fm.references.length > 0) {
+      referencesSection.classList.remove('hidden');
+      referencesList.innerHTML = fm.references
+        .map(function (ref, i) {
+          var label = escapeHtml(ref.title || ref.url || 'Nguồn ' + (i + 1));
+          if (ref.url) {
+            return (
+              '<li><a href="' +
+              escapeHtml(ref.url) +
+              '" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 transition-colors duration-200 cursor-pointer">' +
+              label +
+              '</a></li>'
+            );
+          }
+          return '<li>' + label + '</li>';
+        })
+        .join('');
+    }
+
+    // Show detail, hide loading
+    loadingState.classList.add('hidden');
+    articleDetail.classList.remove('hidden');
+  }
+
+  // Publish handler
+  function handlePublish() {
+    if (!currentArticle) return;
+    window.showConfirm(
+      'Xác nhận xuất bản',
+      'Bạn có chắc muốn xuất bản bài viết này? Hệ thống sẽ git push và trigger deploy.',
+      'Xuất bản',
+      function () {
+        var slug = currentArticle.slug;
+        fetch(API_BASE + '/api/articles/' + slug + '/publish', {
+          method: 'POST',
+          headers: authHeaders(),
+        })
+          .then(function (res) {
+            if (res.status === 401) {
+              handleUnauth();
+              return;
+            }
+            return res.json().then(function (data) {
+              if (res.ok && data.success) {
+                window.showToast('Đã xuất bản thành công. CI/CD đang deploy...', 'success');
+                // Update UI: hide publish button, update status
+                btnPublish.classList.add('hidden');
+                articleStatus.innerHTML =
+                  '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">Đã xuất bản</span>';
+                if (currentArticle.frontmatter) currentArticle.frontmatter.draft = false;
+              } else {
+                window.showToast(data.detail || data.message || 'Xuất bản thất bại', 'error');
+              }
+            });
+          })
+          .catch(function () {
+            window.showToast('Không thể kết nối tới server', 'error');
+          });
+      },
+      'primary'
+    );
+  }
+
+  // Delete handler
+  function handleDelete() {
+    if (!currentArticle) return;
+    window.showConfirm(
+      'Xác nhận xóa',
+      'Bạn có chắc muốn xóa bài viết "' +
+        (currentArticle.frontmatter.title || '') +
+        '"? Hành động này không thể hoàn tác.',
+      'Xóa',
+      function () {
+        var slug = currentArticle.slug;
+        fetch(API_BASE + '/api/articles/' + slug, {
+          method: 'DELETE',
+          headers: authHeaders(),
+        })
+          .then(function (res) {
+            if (res.status === 401) {
+              handleUnauth();
+              return;
+            }
+            if (res.ok) {
+              window.showToast('Đã xóa bài viết', 'success');
+              setTimeout(function () {
+                window.location.href = '/admin/articles';
+              }, 1000);
+            } else {
+              return res.json().then(function (data) {
+                window.showToast(data.detail || 'Xóa thất bại', 'error');
+              });
+            }
+          })
+          .catch(function () {
+            window.showToast('Không thể kết nối tới server', 'error');
+          });
+      },
+      'danger'
+    );
+  }
+
+  // Fetch article detail
+  async function fetchArticle() {
+    var slug = getSlugFromUrl();
+    if (!slug) {
+      showError('Không tìm thấy slug bài viết');
+      return;
+    }
+
+    try {
+      var res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug));
+      if (res.status === 401) {
+        handleUnauth();
+        return;
+      }
+      if (res.status === 404) {
+        showError('Không tìm thấy bài viết: ' + slug);
+        return;
+      }
+      if (!res.ok) throw new Error('Fetch failed');
+
+      var article = await res.json();
+      renderArticle(article);
+    } catch (e) {
+      showError('Không thể kết nối tới server');
+    }
+  }
+
+  // Wire up events
+  btnPublish.addEventListener('click', handlePublish);
+  btnDelete.addEventListener('click', handleDelete);
+
+  // Auth guard + init
+  if (!getApiKey()) {
+    window.location.href = '/admin/login';
+  } else {
+    fetchArticle();
+  }
+</script>

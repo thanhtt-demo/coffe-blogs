@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   return posts.map((post) => ({ params: { slug: post.id } }));
 }
 
-const { slug } = Astro.params;
+const { slug: _slug } = Astro.params;
 ---
 
 <AdminLayout title="Chi tiết bài viết">
@@ -253,7 +253,7 @@ const { slug } = Astro.params;
       referencesSection.classList.remove('hidden');
       referencesList.innerHTML = fm.references
         .map(function (ref, i) {
-          var label = escapeHtml(ref.title || ref.url || 'Nguồn ' + (i + 1));
+          let label = escapeHtml(ref.title || ref.url || 'Nguồn ' + (i + 1));
           if (ref.url) {
             return (
               '<li><a href="' +
@@ -281,7 +281,7 @@ const { slug } = Astro.params;
       'Bạn có chắc muốn xuất bản bài viết này? Hệ thống sẽ git push và trigger deploy.',
       'Xuất bản',
       function () {
-        var slug = currentArticle.slug;
+        let slug = currentArticle.slug;
         fetch(API_BASE + '/api/articles/' + slug + '/publish', {
           method: 'POST',
           headers: authHeaders(),
@@ -322,7 +322,7 @@ const { slug } = Astro.params;
         '"? Hành động này không thể hoàn tác.',
       'Xóa',
       function () {
-        var slug = currentArticle.slug;
+        let slug = currentArticle.slug;
         fetch(API_BASE + '/api/articles/' + slug, {
           method: 'DELETE',
           headers: authHeaders(),
@@ -353,14 +353,14 @@ const { slug } = Astro.params;
 
   // Fetch article detail
   async function fetchArticle() {
-    var slug = getSlugFromUrl();
+    let slug = getSlugFromUrl();
     if (!slug) {
       showError('Không tìm thấy slug bài viết');
       return;
     }
 
     try {
-      var res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug));
+      let res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug));
       if (res.status === 401) {
         handleUnauth();
         return;
@@ -371,9 +371,9 @@ const { slug } = Astro.params;
       }
       if (!res.ok) throw new Error('Fetch failed');
 
-      var article = await res.json();
+      let article = await res.json();
       renderArticle(article);
-    } catch (e) {
+    } catch (_e) {
       showError('Không thể kết nối tới server');
     }
   }

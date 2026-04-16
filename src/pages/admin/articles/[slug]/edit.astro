@@ -302,7 +302,7 @@ const { slug } = Astro.params;
 <script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <script is:inline>
-  const API_BASE = 'http://localhost:8000';
+  var API_BASE = 'http://localhost:8000';
 
   // ── Auth helpers ──────────────────────────────────────────
   function getApiKey() {
@@ -319,46 +319,46 @@ const { slug } = Astro.params;
   // ── Slug from URL ─────────────────────────────────────────
   function getSlugFromUrl() {
     // URL pattern: /admin/articles/{slug}/edit
-    const parts = window.location.pathname.replace(/\/$/, '').split('/');
+    var parts = window.location.pathname.replace(/\/$/, '').split('/');
     // parts: ['', 'admin', 'articles', '{slug}', 'edit']
     return parts[parts.length - 2];
   }
 
   // ── DOM refs ──────────────────────────────────────────────
-  const loadingState = document.getElementById('loading-state');
-  const errorState = document.getElementById('error-state');
-  const errorMessage = document.getElementById('error-message');
-  const editorContainer = document.getElementById('editor-container');
-  const pageTitle = document.getElementById('page-title');
+  var loadingState = document.getElementById('loading-state');
+  var errorState = document.getElementById('error-state');
+  var errorMessage = document.getElementById('error-message');
+  var editorContainer = document.getElementById('editor-container');
+  var pageTitle = document.getElementById('page-title');
 
-  const fieldTitle = document.getElementById('field-title');
-  const fieldExcerpt = document.getElementById('field-excerpt');
-  const fieldCategory = document.getElementById('field-category');
-  const fieldDate = document.getElementById('field-date');
-  const fieldTags = document.getElementById('field-tags');
-  const fieldAuthor = document.getElementById('field-author');
-  const fieldContent = document.getElementById('field-content');
+  var fieldTitle = document.getElementById('field-title');
+  var fieldExcerpt = document.getElementById('field-excerpt');
+  var fieldCategory = document.getElementById('field-category');
+  var fieldDate = document.getElementById('field-date');
+  var fieldTags = document.getElementById('field-tags');
+  var fieldAuthor = document.getElementById('field-author');
+  var fieldContent = document.getElementById('field-content');
 
-  const errorTitle = document.getElementById('error-title');
-  const errorExcerpt = document.getElementById('error-excerpt');
-  const errorDate = document.getElementById('error-date');
+  var errorTitle = document.getElementById('error-title');
+  var errorExcerpt = document.getElementById('error-excerpt');
+  var errorDate = document.getElementById('error-date');
 
-  const tabEdit = document.getElementById('tab-edit');
-  const tabPreview = document.getElementById('tab-preview');
-  const paneEdit = document.getElementById('pane-edit');
-  const panePreview = document.getElementById('pane-preview');
-  const contentPreview = document.getElementById('content-preview');
+  var tabEdit = document.getElementById('tab-edit');
+  var tabPreview = document.getElementById('tab-preview');
+  var paneEdit = document.getElementById('pane-edit');
+  var panePreview = document.getElementById('pane-preview');
+  var contentPreview = document.getElementById('content-preview');
 
-  const btnSave = document.getElementById('btn-save');
+  var btnSave = document.getElementById('btn-save');
 
-  let currentArticle = null;
+  var currentArticle = null;
 
   // ── Comment State Manager ─────────────────────────────────
-  const CommentState = (function () {
-    let comments = [];
-    let _isRewriting = false;
-    let _diffResult = null;
-    let _onStateChange = null;
+  var CommentState = (function () {
+    var comments = [];
+    var _isRewriting = false;
+    var _diffResult = null;
+    var _onStateChange = null;
 
     function notify() {
       if (typeof _onStateChange === 'function') _onStateChange();
@@ -367,7 +367,7 @@ const { slug } = Astro.params;
     function addComment(selectedText, startOffset, endOffset, comment) {
       if (!selectedText || !selectedText.trim()) return null;
       if (!comment || !comment.trim()) return null;
-      const item = {
+      var item = {
         id: crypto.randomUUID(),
         selectedText: selectedText,
         startOffset: startOffset,
@@ -395,28 +395,28 @@ const { slug } = Astro.params;
     }
 
     function updateOffsets(oldContent, newContent) {
-      const removed = [];
+      var removed = [];
       // Find the first character where old and new differ
-      const minLen = Math.min(oldContent.length, newContent.length);
-      let changeStart = 0;
+      var minLen = Math.min(oldContent.length, newContent.length);
+      var changeStart = 0;
       while (changeStart < minLen && oldContent[changeStart] === newContent[changeStart]) {
         changeStart++;
       }
       // Find the last character where old and new differ (from the end)
-      let oldEnd = oldContent.length;
-      let newEnd = newContent.length;
+      var oldEnd = oldContent.length;
+      var newEnd = newContent.length;
       while (oldEnd > changeStart && newEnd > changeStart && oldContent[oldEnd - 1] === newContent[newEnd - 1]) {
         oldEnd--;
         newEnd--;
       }
-      const oldChangeEnd = oldEnd;
-      const delta = newEnd - oldEnd;
+      var oldChangeEnd = oldEnd;
+      var delta = newEnd - oldEnd;
 
-      const surviving = [];
-      for (let i = 0; i < comments.length; i++) {
-        const c = comments[i];
-        const s = c.startOffset;
-        const e = c.endOffset;
+      var surviving = [];
+      for (var i = 0; i < comments.length; i++) {
+        var c = comments[i];
+        var s = c.startOffset;
+        var e = c.endOffset;
 
         // If the change is entirely before the comment region, shift both offsets
         if (oldChangeEnd <= s) {
@@ -431,12 +431,12 @@ const { slug } = Astro.params;
         // The change overlaps with the comment region
         else {
           // Adjust start: if change starts before comment start, clamp to changeStart
-          let newStart = s;
+          var newStart = s;
           if (changeStart < s) {
             newStart = Math.max(changeStart, s + delta);
           }
           // Adjust end: if change extends past or into comment end
-          let newEndOffset = e;
+          var newEndOffset = e;
           if (oldChangeEnd >= e) {
             // The deleted region covers the end of the comment
             newEndOffset = newEnd;
@@ -507,12 +507,12 @@ const { slug } = Astro.params;
 
   // ── Selection Handler ─────────────────────────────────────
   function getPopoverPosition(textarea, selectionStart) {
-    const rect = textarea.getBoundingClientRect();
-    const textBefore = textarea.value.substring(0, selectionStart);
-    const lines = textBefore.split('\n');
-    const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
-    const lineIndex = lines.length - 1;
-    const topOffset = lineIndex * lineHeight - textarea.scrollTop;
+    var rect = textarea.getBoundingClientRect();
+    var textBefore = textarea.value.substring(0, selectionStart);
+    var lines = textBefore.split('\n');
+    var lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+    var lineIndex = lines.length - 1;
+    var topOffset = lineIndex * lineHeight - textarea.scrollTop;
     return {
       top: rect.top + window.scrollY + Math.min(topOffset + lineHeight + 8, rect.height),
       left: rect.left + window.scrollX + 16,
@@ -520,37 +520,37 @@ const { slug } = Astro.params;
   }
 
   fieldContent.addEventListener('mouseup', function () {
-    const start = fieldContent.selectionStart;
-    const end = fieldContent.selectionEnd;
+    var start = fieldContent.selectionStart;
+    var end = fieldContent.selectionEnd;
     if (start === end) return;
 
-    const selectedText = fieldContent.value.substring(start, end);
+    var selectedText = fieldContent.value.substring(start, end);
     if (!selectedText.trim()) return;
 
-    const position = getPopoverPosition(fieldContent, start);
+    var position = getPopoverPosition(fieldContent, start);
     showCommentPopover(selectedText, start, end, position);
   });
 
   // ── Preview Selection Handler ─────────────────────────────
   contentPreview.addEventListener('mouseup', function () {
-    const sel = window.getSelection();
+    var sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
 
-    const selectedText = sel.toString();
+    var selectedText = sel.toString();
     if (!selectedText.trim()) return;
 
     // Find this text in the raw markdown content
-    const content = fieldContent.value;
-    let searchText = selectedText.trim();
-    let startOffset = content.indexOf(searchText);
+    var content = fieldContent.value;
+    var searchText = selectedText.trim();
+    var startOffset = content.indexOf(searchText);
 
     // If exact match not found, try shorter substring (first 40 chars)
     if (startOffset === -1 && searchText.length > 40) {
-      const shorter = searchText.substring(0, 40);
+      var shorter = searchText.substring(0, 40);
       startOffset = content.indexOf(shorter);
       if (startOffset !== -1) {
         // Extend to full length if possible
-        const endCandidate = startOffset + searchText.length;
+        var endCandidate = startOffset + searchText.length;
         if (endCandidate <= content.length) {
           searchText = content.substring(startOffset, endCandidate);
         }
@@ -562,12 +562,12 @@ const { slug } = Astro.params;
       return;
     }
 
-    const endOffset = startOffset + searchText.length;
+    var endOffset = startOffset + searchText.length;
 
     // Position popover near the selection in preview
-    const range = sel.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const position = {
+    var range = sel.getRangeAt(0);
+    var rect = range.getBoundingClientRect();
+    var position = {
       top: rect.bottom + window.scrollY + 8,
       left: rect.left + window.scrollX,
     };
@@ -577,20 +577,20 @@ const { slug } = Astro.params;
   });
 
   // ── Comment Popover Logic ─────────────────────────────────
-  const commentPopover = document.getElementById('comment-popover');
-  const popoverSelectedText = document.getElementById('popover-selected-text');
-  const popoverCommentInput = document.getElementById('popover-comment-input');
-  const popoverError = document.getElementById('popover-error');
-  const popoverCancel = document.getElementById('popover-cancel');
-  const popoverAdd = document.getElementById('popover-add');
+  var commentPopover = document.getElementById('comment-popover');
+  var popoverSelectedText = document.getElementById('popover-selected-text');
+  var popoverCommentInput = document.getElementById('popover-comment-input');
+  var popoverError = document.getElementById('popover-error');
+  var popoverCancel = document.getElementById('popover-cancel');
+  var popoverAdd = document.getElementById('popover-add');
 
-  let _popoverSelection = null; // { selectedText, startOffset, endOffset }
+  var _popoverSelection = null; // { selectedText, startOffset, endOffset }
 
   function showCommentPopover(selectedText, startOffset, endOffset, position) {
     _popoverSelection = { selectedText: selectedText, startOffset: startOffset, endOffset: endOffset };
 
     // Display truncated selected text (max 60 chars)
-    const displayText = selectedText.length > 60 ? selectedText.substring(0, 60) + '...' : selectedText;
+    var displayText = selectedText.length > 60 ? selectedText.substring(0, 60) + '...' : selectedText;
     popoverSelectedText.textContent = '"' + displayText + '"';
 
     // Clear input and error
@@ -632,7 +632,7 @@ const { slug } = Astro.params;
 
   // "Thêm comment" button click handler
   popoverAdd.addEventListener('click', function () {
-    const comment = popoverCommentInput.value.trim();
+    var comment = popoverCommentInput.value.trim();
     if (!comment) {
       popoverError.classList.remove('hidden');
       return;
@@ -673,11 +673,11 @@ const { slug } = Astro.params;
   });
 
   // ── Overlay setup & scroll sync ────────────────────────
-  const commentOverlay = document.getElementById('comment-overlay');
+  var commentOverlay = document.getElementById('comment-overlay');
 
   function syncOverlayStyles() {
-    const cs = getComputedStyle(fieldContent);
-    const props = [
+    var cs = getComputedStyle(fieldContent);
+    var props = [
       'fontFamily',
       'fontSize',
       'fontWeight',
@@ -697,7 +697,7 @@ const { slug } = Astro.params;
       'boxSizing',
       'width',
     ];
-    for (let i = 0; i < props.length; i++) {
+    for (var i = 0; i < props.length; i++) {
       commentOverlay.style[props[i]] = cs[props[i]];
     }
     commentOverlay.style.whiteSpace = 'pre-wrap';
@@ -718,8 +718,8 @@ const { slug } = Astro.params;
 
   // ── Render Comment Markers ──────────────────────────────
   function renderCommentMarkers() {
-    const comments = CommentState.getComments();
-    const content = fieldContent.value;
+    var comments = CommentState.getComments();
+    var content = fieldContent.value;
 
     if (comments.length === 0) {
       commentOverlay.innerHTML = '';
@@ -727,17 +727,17 @@ const { slug } = Astro.params;
     }
 
     // Sort comments by startOffset to process in order
-    const sorted = comments.slice().sort(function (a, b) {
+    var sorted = comments.slice().sort(function (a, b) {
       return a.startOffset - b.startOffset;
     });
 
     // Build HTML with markers
-    let html = '';
-    let lastIndex = 0;
+    var html = '';
+    var lastIndex = 0;
 
-    for (let i = 0; i < sorted.length; i++) {
-      const c = sorted[i];
-      const commentIndex = comments.indexOf(c) + 1; // 1-based index in original order
+    for (var i = 0; i < sorted.length; i++) {
+      var c = sorted[i];
+      var commentIndex = comments.indexOf(c) + 1; // 1-based index in original order
 
       // Add text before this marker
       if (c.startOffset > lastIndex) {
@@ -745,8 +745,8 @@ const { slug } = Astro.params;
       }
 
       // Add marked region with badge and tooltip
-      const markedText = escapeHtml(content.substring(c.startOffset, c.endOffset));
-      const tooltipText = escapeAttr(c.comment);
+      var markedText = escapeHtml(content.substring(c.startOffset, c.endOffset));
+      var tooltipText = escapeAttr(c.comment);
       html +=
         '<mark class="bg-blue-100/60 relative" style="pointer-events: auto; cursor: pointer;" title="' +
         tooltipText +
@@ -786,10 +786,10 @@ const { slug } = Astro.params;
   function renderPreviewHighlights() {
     if (panePreview.classList.contains('hidden')) return;
 
-    const comments = CommentState.getComments();
+    var comments = CommentState.getComments();
 
     // Re-render preview from scratch to clear old highlights
-    const md = fieldContent.value.trim();
+    var md = fieldContent.value.trim();
     if (md && typeof marked !== 'undefined') {
       contentPreview.innerHTML = marked.parse(md);
     } else if (md) {
@@ -799,20 +799,20 @@ const { slug } = Astro.params;
     if (comments.length === 0) return;
 
     // For each comment, find its selectedText in the preview DOM and wrap with <mark>
-    for (let i = 0; i < comments.length; i++) {
-      const c = comments[i];
-      const commentIndex = i + 1;
+    for (var i = 0; i < comments.length; i++) {
+      var c = comments[i];
+      var commentIndex = i + 1;
       // Strip markdown formatting to get plain text for matching
-      const searchText = c.selectedText.replace(/[_*~`#[\]]/g, '');
+      var searchText = c.selectedText.replace(/[_*~`#\[\]]/g, '');
       if (!searchText.trim()) continue;
       _highlightTextInNode(contentPreview, searchText, commentIndex, c.comment);
     }
   }
 
   function _highlightTextInNode(root, searchText, badgeNum, tooltipText) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
-    const nodesToProcess = [];
-    let node;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    var nodesToProcess = [];
+    var node;
 
     // Collect all text nodes
     while ((node = walker.nextNode())) {
@@ -820,46 +820,46 @@ const { slug } = Astro.params;
     }
 
     // Try to find searchText across text nodes
-    let fullText = '';
-    const nodeMap = []; // { node, startInFull, endInFull }
-    for (let i = 0; i < nodesToProcess.length; i++) {
-      const n = nodesToProcess[i];
-      const start = fullText.length;
+    var fullText = '';
+    var nodeMap = []; // { node, startInFull, endInFull }
+    for (var i = 0; i < nodesToProcess.length; i++) {
+      var n = nodesToProcess[i];
+      var start = fullText.length;
       fullText += n.textContent;
       nodeMap.push({ node: n, start: start, end: fullText.length });
     }
 
-    let idx = fullText.indexOf(searchText);
+    var idx = fullText.indexOf(searchText);
     if (idx === -1) {
       // Try with trimmed/normalized whitespace
-      const normalized = searchText.replace(/\s+/g, ' ').trim();
-      const normalizedFull = fullText.replace(/\s+/g, ' ');
-      const nIdx = normalizedFull.indexOf(normalized);
+      var normalized = searchText.replace(/\s+/g, ' ').trim();
+      var normalizedFull = fullText.replace(/\s+/g, ' ');
+      var nIdx = normalizedFull.indexOf(normalized);
       if (nIdx === -1) return;
       // Map back to original position (approximate)
       idx = nIdx;
     }
 
-    const endIdx = idx + searchText.length;
+    var endIdx = idx + searchText.length;
 
     // Find which text nodes contain the match
-    for (let i = 0; i < nodeMap.length; i++) {
-      const nm = nodeMap[i];
+    for (var i = 0; i < nodeMap.length; i++) {
+      var nm = nodeMap[i];
       if (nm.end <= idx) continue;
       if (nm.start >= endIdx) break;
 
-      const textNode = nm.node;
-      const localStart = Math.max(0, idx - nm.start);
-      const localEnd = Math.min(textNode.textContent.length, endIdx - nm.start);
+      var textNode = nm.node;
+      var localStart = Math.max(0, idx - nm.start);
+      var localEnd = Math.min(textNode.textContent.length, endIdx - nm.start);
 
       if (localStart >= localEnd) continue;
 
       // Split text node and wrap matched part
-      const before = textNode.textContent.substring(0, localStart);
-      const matched = textNode.textContent.substring(localStart, localEnd);
-      const after = textNode.textContent.substring(localEnd);
+      var before = textNode.textContent.substring(0, localStart);
+      var matched = textNode.textContent.substring(localStart, localEnd);
+      var after = textNode.textContent.substring(localEnd);
 
-      const mark = document.createElement('mark');
+      var mark = document.createElement('mark');
       mark.className = 'bg-blue-100 relative inline';
       mark.style.cssText = 'padding: 1px 2px; border-radius: 2px;';
       mark.title = tooltipText;
@@ -867,7 +867,7 @@ const { slug } = Astro.params;
 
       // Add badge on first node only
       if (nm.start <= idx) {
-        const badge = document.createElement('span');
+        var badge = document.createElement('span');
         badge.className =
           'inline-flex items-center justify-center w-4 h-4 bg-blue-500 text-white rounded-full text-[10px] font-medium align-top';
         badge.style.cssText = 'font-size: 10px; line-height: 16px; display: inline-flex; margin-right: 2px;';
@@ -875,8 +875,8 @@ const { slug } = Astro.params;
         mark.insertBefore(badge, mark.firstChild);
       }
 
-      const parent = textNode.parentNode;
-      const frag = document.createDocumentFragment();
+      var parent = textNode.parentNode;
+      var frag = document.createDocumentFragment();
       if (before) frag.appendChild(document.createTextNode(before));
       frag.appendChild(mark);
       if (after) frag.appendChild(document.createTextNode(after));
@@ -887,13 +887,14 @@ const { slug } = Astro.params;
   }
 
   // ── Comment List Rendering ──────────────────────────────
-  const commentCountBadge = document.getElementById('comment-count-badge');
-  const commentListItems = document.getElementById('comment-list-items');
-  const commentListEmpty = document.getElementById('comment-list-empty');
+  var commentListPanel = document.getElementById('comment-list-panel');
+  var commentCountBadge = document.getElementById('comment-count-badge');
+  var commentListItems = document.getElementById('comment-list-items');
+  var commentListEmpty = document.getElementById('comment-list-empty');
 
   function renderCommentList() {
-    const comments = CommentState.getComments();
-    const count = comments.length;
+    var comments = CommentState.getComments();
+    var count = comments.length;
 
     // Update badge
     commentCountBadge.textContent = count;
@@ -907,11 +908,11 @@ const { slug } = Astro.params;
       return;
     }
 
-    for (let i = 0; i < comments.length; i++) {
+    for (var i = 0; i < comments.length; i++) {
       (function (c, index) {
-        const displayText = c.selectedText.length > 60 ? c.selectedText.substring(0, 60) + '...' : c.selectedText;
+        var displayText = c.selectedText.length > 60 ? c.selectedText.substring(0, 60) + '...' : c.selectedText;
 
-        const item = document.createElement('div');
+        var item = document.createElement('div');
         item.className =
           'border border-zinc-200 rounded-md p-3 hover:border-zinc-300 transition-colors duration-200 cursor-pointer';
         item.setAttribute('data-comment-id', c.id);
@@ -943,7 +944,7 @@ const { slug } = Astro.params;
         });
 
         // Delete button
-        const deleteBtn = item.querySelector('.comment-delete-btn');
+        var deleteBtn = item.querySelector('.comment-delete-btn');
         deleteBtn.addEventListener('click', function (e) {
           e.stopPropagation();
           CommentState.removeComment(c.id);
@@ -955,19 +956,19 @@ const { slug } = Astro.params;
   }
 
   function getScrollTopForOffset(textarea, offset) {
-    const textBefore = textarea.value.substring(0, offset);
-    const lines = textBefore.split('\n');
-    const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
-    const targetTop = (lines.length - 1) * lineHeight;
+    var textBefore = textarea.value.substring(0, offset);
+    var lines = textBefore.split('\n');
+    var lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+    var targetTop = (lines.length - 1) * lineHeight;
     return Math.max(0, targetTop - textarea.clientHeight / 2);
   }
 
   // ── Rewrite Button ──────────────────────────────────────
-  const btnRewrite = document.getElementById('btn-rewrite');
-  const rewriteCount = document.getElementById('rewrite-count');
+  var btnRewrite = document.getElementById('btn-rewrite');
+  var rewriteCount = document.getElementById('rewrite-count');
 
   function updateRewriteButton() {
-    const count = CommentState.getCount();
+    var count = CommentState.getCount();
     rewriteCount.textContent = count;
 
     if (CommentState.isRewriting()) {
@@ -987,9 +988,9 @@ const { slug } = Astro.params;
 
   // ── Rewrite API Client ──────────────────────────────────
   async function callRewriteAPI() {
-    const slug = getSlugFromUrl();
-    const comments = CommentState.getComments();
-    const fullContent = fieldContent.value;
+    var slug = getSlugFromUrl();
+    var comments = CommentState.getComments();
+    var fullContent = fieldContent.value;
 
     // Set loading state
     CommentState.setRewriting(true);
@@ -997,7 +998,7 @@ const { slug } = Astro.params;
     hideCommentPopover();
 
     try {
-      const res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug) + '/rewrite', {
+      var res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug) + '/rewrite', {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
@@ -1013,7 +1014,7 @@ const { slug } = Astro.params;
         return;
       }
 
-      const data = await res.json();
+      var data = await res.json();
 
       if (!res.ok) {
         window.showToast(data.detail || 'Rewrite thất bại', 'error');
@@ -1029,7 +1030,7 @@ const { slug } = Astro.params;
       });
       CommentState.setRewriting(false);
       // Don't re-enable textarea yet — diff view will handle that
-    } catch (_e) {
+    } catch (e) {
       window.showToast('Không thể kết nối tới server', 'error');
       CommentState.setRewriting(false);
       fieldContent.disabled = false;
@@ -1044,16 +1045,16 @@ const { slug } = Astro.params;
 
   // ── Diff Algorithm (Line-by-line LCS) ───────────────────
   function computeDiff(originalText, rewrittenText) {
-    const oldLines = originalText.split('\n');
-    const newLines = rewrittenText.split('\n');
-    const m = oldLines.length;
-    const n = newLines.length;
+    var oldLines = originalText.split('\n');
+    var newLines = rewrittenText.split('\n');
+    var m = oldLines.length;
+    var n = newLines.length;
 
     // Build LCS table
-    const dp = [];
-    for (const i = 0; i <= m; i++) {
+    var dp = [];
+    for (var i = 0; i <= m; i++) {
       dp[i] = [];
-      for (const j = 0; j <= n; j++) {
+      for (var j = 0; j <= n; j++) {
         if (i === 0 || j === 0) {
           dp[i][j] = 0;
         } else if (oldLines[i - 1] === newLines[j - 1]) {
@@ -1065,9 +1066,9 @@ const { slug } = Astro.params;
     }
 
     // Backtrack to build diff
-    const result = [];
-    const i = m;
-    const j = n;
+    var result = [];
+    var i = m;
+    var j = n;
     while (i > 0 || j > 0) {
       if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
         result.unshift({ type: 'unchanged', text: oldLines[i - 1] });
@@ -1086,15 +1087,15 @@ const { slug } = Astro.params;
   }
 
   // ── Diff View Rendering ─────────────────────────────────
-  const diffView = document.getElementById('diff-view');
-  const diffContent = document.getElementById('diff-content');
+  var diffView = document.getElementById('diff-view');
+  var diffContent = document.getElementById('diff-content');
 
   function isPreviewActive() {
     return !panePreview.classList.contains('hidden');
   }
 
   function renderDiffView() {
-    const result = CommentState.getDiffResult();
+    var result = CommentState.getDiffResult();
 
     if (!result) {
       diffView.classList.add('hidden');
@@ -1111,13 +1112,13 @@ const { slug } = Astro.params;
     diffView.classList.remove('hidden');
 
     // Compute diff
-    const diffLines = computeDiff(result.original, result.rewritten);
+    var diffLines = computeDiff(result.original, result.rewritten);
 
     // Render diff lines
-    const html = '';
-    for (const i = 0; i < diffLines.length; i++) {
-      const line = diffLines[i];
-      const lineText = escapeHtml(line.text) || '&nbsp;';
+    var html = '';
+    for (var i = 0; i < diffLines.length; i++) {
+      var line = diffLines[i];
+      var lineText = escapeHtml(line.text) || '&nbsp;';
       if (line.type === 'removed') {
         html += '<div class="bg-red-50 text-red-800 px-2 py-0.5">- ' + lineText + '</div>';
       } else if (line.type === 'added') {
@@ -1130,11 +1131,11 @@ const { slug } = Astro.params;
   }
 
   // ── Diff Accept / Reject ────────────────────────────────
-  const diffAccept = document.getElementById('diff-accept');
-  const diffReject = document.getElementById('diff-reject');
+  var diffAccept = document.getElementById('diff-accept');
+  var diffReject = document.getElementById('diff-reject');
 
   diffAccept.addEventListener('click', function () {
-    const result = CommentState.getDiffResult();
+    var result = CommentState.getDiffResult();
     if (!result) return;
 
     // Replace textarea content with rewritten content
@@ -1154,15 +1155,15 @@ const { slug } = Astro.params;
   });
 
   // ── Textarea Input Handler (Offset Tracking) ────────────
-  const _previousContent = '';
+  var _previousContent = '';
 
   function initPreviousContent() {
     _previousContent = fieldContent.value;
   }
 
   fieldContent.addEventListener('input', function () {
-    const newContent = fieldContent.value;
-    const removed = CommentState.updateOffsets(_previousContent, newContent);
+    var newContent = fieldContent.value;
+    var removed = CommentState.updateOffsets(_previousContent, newContent);
 
     if (removed.length > 0) {
       window.showToast(removed.length + ' comment đã bị xóa do vùng văn bản bị xóa', 'info');
@@ -1190,7 +1191,7 @@ const { slug } = Astro.params;
   // ── Populate form ─────────────────────────────────────────
   function populateForm(article) {
     currentArticle = article;
-    const fm = article.frontmatter;
+    var fm = article.frontmatter;
 
     pageTitle.textContent = 'Chỉnh sửa: ' + (fm.title || '');
 
@@ -1202,10 +1203,10 @@ const { slug } = Astro.params;
 
     // Parse date for input[type=date] — expects YYYY-MM-DD
     if (fm.publishDate) {
-      const d = new Date(fm.publishDate);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
+      var d = new Date(fm.publishDate);
+      var yyyy = d.getFullYear();
+      var mm = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
       fieldDate.value = yyyy + '-' + mm + '-' + dd;
     }
 
@@ -1244,7 +1245,7 @@ const { slug } = Astro.params;
     paneEdit.classList.add('hidden');
 
     // Render markdown preview
-    const md = fieldContent.value.trim();
+    var md = fieldContent.value.trim();
     if (md && typeof marked !== 'undefined') {
       contentPreview.innerHTML = marked.parse(md);
     } else if (md) {
@@ -1259,9 +1260,9 @@ const { slug } = Astro.params;
 
   // ── Validation ────────────────────────────────────────────
   function clearErrors() {
-    const fields = [fieldTitle, fieldExcerpt, fieldDate];
-    const errors = [errorTitle, errorExcerpt, errorDate];
-    for (const i = 0; i < fields.length; i++) {
+    var fields = [fieldTitle, fieldExcerpt, fieldDate];
+    var errors = [errorTitle, errorExcerpt, errorDate];
+    for (var i = 0; i < fields.length; i++) {
       fields[i].classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
       fields[i].classList.add('border-zinc-300');
       errors[i].classList.add('hidden');
@@ -1276,8 +1277,8 @@ const { slug } = Astro.params;
 
   function validate() {
     clearErrors();
-    const valid = true;
-    const firstError = null;
+    var valid = true;
+    var firstError = null;
 
     if (!fieldTitle.value.trim()) {
       setFieldError(fieldTitle, errorTitle);
@@ -1307,11 +1308,11 @@ const { slug } = Astro.params;
   btnSave.addEventListener('click', function () {
     if (!validate()) return;
 
-    const slug = getSlugFromUrl();
+    var slug = getSlugFromUrl();
 
     // Build tags array from comma-separated string
-    const tagsStr = fieldTags.value.trim();
-    const tags = [];
+    var tagsStr = fieldTags.value.trim();
+    var tags = [];
     if (tagsStr) {
       tags = tagsStr
         .split(',')
@@ -1324,10 +1325,10 @@ const { slug } = Astro.params;
     }
 
     // Build publishDate as ISO string
-    const dateVal = fieldDate.value; // YYYY-MM-DD
-    const publishDate = new Date(dateVal + 'T00:00:00Z').toISOString();
+    var dateVal = fieldDate.value; // YYYY-MM-DD
+    var publishDate = new Date(dateVal + 'T00:00:00Z').toISOString();
 
-    const payload = {
+    var payload = {
       frontmatter: {
         title: fieldTitle.value.trim(),
         excerpt: fieldExcerpt.value.trim(),
@@ -1379,14 +1380,14 @@ const { slug } = Astro.params;
 
   // ── Fetch article ─────────────────────────────────────────
   async function fetchArticle() {
-    const slug = getSlugFromUrl();
+    var slug = getSlugFromUrl();
     if (!slug) {
       showError('Không tìm thấy slug bài viết');
       return;
     }
 
     try {
-      const res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug));
+      var res = await fetch(API_BASE + '/api/articles/' + encodeURIComponent(slug));
       if (res.status === 401) {
         handleUnauth();
         return;
@@ -1397,9 +1398,9 @@ const { slug } = Astro.params;
       }
       if (!res.ok) throw new Error('Fetch failed');
 
-      const article = await res.json();
+      var article = await res.json();
       populateForm(article);
-    } catch (_e) {
+    } catch (e) {
       showError('Không thể kết nối tới server');
     }
   }

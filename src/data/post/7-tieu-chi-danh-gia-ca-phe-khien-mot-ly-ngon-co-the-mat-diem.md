@@ -1,6 +1,6 @@
 ---
 title: 7 Tiêu Chí Đánh Giá Cà Phê Khiến Một Ly Ngon Có Thể Mất Điểm
-publishDate: 2026-04-12T00:00:00Z
+publishDate: 2026-04-12 00:00:00+00:00
 excerpt: 'Một ly cà phê không chỉ được chấm bằng mùi thơm hay vị đậm: 7 tiêu chí này
   quyết định vì sao cùng một mẫu lại được khen hoặc loại bỏ.'
 image: /images/posts/7-tieu-chi-danh-gia-ca-phe-khien-mot-ly-ngon-co-the-mat-diem/cover.jpg

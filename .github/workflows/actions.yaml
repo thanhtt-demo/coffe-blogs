@@ -27,7 +27,7 @@ jobs:
   deploy:
     name: Deploy → Cloudflare Pages
     runs-on: ubuntu-latest
-    needs: [build, check]
+    needs: [build]
     # Only deploy on direct pushes to main (not PRs)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:

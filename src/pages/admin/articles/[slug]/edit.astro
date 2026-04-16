@@ -803,7 +803,7 @@ const { slug } = Astro.params;
       const c = comments[i];
       const commentIndex = i + 1;
       // Strip markdown formatting to get plain text for matching
-      const searchText = c.selectedText.replace(/[_*~`#\[\]]/g, '');
+      const searchText = c.selectedText.replace(/[_*~`#[\]]/g, '');
       if (!searchText.trim()) continue;
       _highlightTextInNode(contentPreview, searchText, commentIndex, c.comment);
     }
@@ -887,7 +887,6 @@ const { slug } = Astro.params;
   }
 
   // ── Comment List Rendering ──────────────────────────────
-  const commentListPanel = document.getElementById('comment-list-panel');
   const commentCountBadge = document.getElementById('comment-count-badge');
   const commentListItems = document.getElementById('comment-list-items');
   const commentListEmpty = document.getElementById('comment-list-empty');
@@ -1030,7 +1029,7 @@ const { slug } = Astro.params;
       });
       CommentState.setRewriting(false);
       // Don't re-enable textarea yet — diff view will handle that
-    } catch (e) {
+    } catch (_e) {
       window.showToast('Không thể kết nối tới server', 'error');
       CommentState.setRewriting(false);
       fieldContent.disabled = false;
@@ -1400,7 +1399,7 @@ const { slug } = Astro.params;
 
       const article = await res.json();
       populateForm(article);
-    } catch (e) {
+    } catch (_e) {
       showError('Không thể kết nối tới server');
     }
   }
